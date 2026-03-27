@@ -1,0 +1,35 @@
+{
+  // Already in base config @tsconfig/node24/tsconfig.json but keeping it in the local file helps IDEs provide better autocomplete and validation for the specific overrides you've added.
+  "$schema": "https://www.schemastore.org/tsconfig",
+  "extends": "@tsconfig/node24/tsconfig.json",
+
+  "compilerOptions": {
+    // support the latest Node.js features introduced after version 16 which is the one set in the base config
+    "moduleResolution": "nodenext",
+
+    // --- Configurations for a modern Node.js + Bundler (SST/Vite) environment ---
+
+    // Do not generate .js files from tsc. SST (esbuild) will handle bundling.
+    // tsc is only used for type validation (`tsc --noEmit`).
+    "noEmit": true,
+
+    // Allows importing .ts files directly using their extension (e.g., `import './file.ts'`).
+    // Improves compatibility with the native Node.js TS loader and bundlers like Vite/esbuild.
+    "allowImportingTsExtensions": true,
+
+    // Adjusts extensions in imports for Node.js module resolution.
+    // Even though `noEmit` is enabled, this helps the type-checker understand how
+    // modules would be resolved at runtime, maintaining consistency.
+    "rewriteRelativeImportExtensions": true,
+
+    // --- Additional options to improve the development experience ---
+
+    // Defines the base for non-relative module resolution.
+    "baseUrl": "./src",
+
+    // Defines aliases for module paths, improving import readability.
+    "paths": {
+      "@shared/*": ["shared/*"]
+    }
+  }
+}
