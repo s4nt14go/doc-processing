@@ -15,7 +15,7 @@ The system's core will reside in `src/modules/documentProcessing/`:
 src/modules/documentProcessing/
 ├── domain/
 │   ├── Process.ts          # Main entity with states (PENDING, RUNNING, etc.)
-│   ├── Stats.ts            # Value Object for counts (words, lines, characters)
+│   ├── ProcessResults.ts   # Value Object for counts (words, lines, etc.)
 │   └── ProcessStatus.ts    # Enum for states (PENDING, RUNNING, COMPLETED, etc.)
 ├── repos/                  # Repositories
 ├── useCases/

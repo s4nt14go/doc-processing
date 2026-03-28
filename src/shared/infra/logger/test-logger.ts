@@ -24,7 +24,7 @@ function testLogger(): void {
   } catch (error) {
     logger.error('Caught an expected error', { 
       error, 
-      operation: 'database-sync' 
+      operation: 'database-sync', 
     });
   }
 
