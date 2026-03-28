@@ -1,4 +1,4 @@
-import { ValueObject } from '@shared/core/domain/ValueObject.js';
+import { ValueObject } from '../../../shared/core/domain/ValueObject.ts';
 
 interface ProcessProgressProps {
   totalFiles: number;
@@ -41,6 +41,10 @@ export class ProcessProgress extends ValueObject<ProcessProgressProps, ProcessPr
     this.props.percentage = Math.round(
       (this.props.processedFiles / this.props.totalFiles) * 100,
     );
+  }
+
+  public static assemble(dto: ProcessProgressDto): ProcessProgress {
+    return new ProcessProgress(dto);
   }
 
   public toDto(): ProcessProgressDto {

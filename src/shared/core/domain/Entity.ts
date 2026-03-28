@@ -1,5 +1,5 @@
 import { EntityID } from './EntityID.ts';
-import { areObjectsEqual } from '@shared/utils/utils.js';
+import { areObjectsEqual } from '../../utils/utils.ts';
 
 export abstract class Entity<T, TDto> {
   protected readonly _id: EntityID;

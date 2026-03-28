@@ -1,4 +1,4 @@
-import { ValueObject } from '@shared/core/domain/ValueObject.js';
+import { ValueObject } from '../../../shared/core/domain/ValueObject.ts';
 
 interface ProcessResultsProps {
   totalWords: number;
@@ -42,6 +42,10 @@ export class ProcessResults extends ValueObject<ProcessResultsProps, ProcessResu
     this.props.totalWords = currentResults.totalWords;
     this.props.totalLines = currentResults.totalLines;
     this.props.filesProcessed = currentResults.filesProcessed;
+  }
+
+  public static assemble(dto: ProcessResultsDto): ProcessResults {
+    return new ProcessResults(dto);
   }
 
   public toDto(): ProcessResultsDto {

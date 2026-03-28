@@ -1,28 +1,30 @@
 import { PROCESS_STATUS, ProcessStatus } from './ProcessStatus.ts';
-import { ProcessProgress, ProcessProgressDto } from './ProcessProgress.ts';
-import { ProcessResults, ProcessResultsDto } from './ProcessResults.ts';
-import { Entity } from '@shared/core/domain/Entity.js';
-import { EntityID } from '@shared/core/domain/EntityID.js';
-import { Spread } from '@shared/utils/utils.js';
+import { ProcessProgress } from './ProcessProgress.ts';
+import type { ProcessProgressDto } from './ProcessProgress.ts';
+import { ProcessResults } from './ProcessResults.ts';
+import type { ProcessResultsDto } from './ProcessResults.ts';
+import { Entity } from '../../../shared/core/domain/Entity.ts';
+import { EntityID } from '../../../shared/core/domain/EntityID.ts';
+import { Spread } from '../../../shared/utils/utils.ts';
 
 export interface ProcessProps {
   status: ProcessStatus;
   filesToProcess: string[];
-  progress?: ProcessProgress;
-  startedAt?: Date;
-  estimatedCompletion?: Date;
-  results?: ProcessResults;
-  completedAt?: Date;
+  progress: ProcessProgress | null;
+  startedAt: Date | null;
+  estimatedCompletion: Date | null;
+  results: ProcessResults | null;
+  completedAt: Date | null;
 }
 
-type ProcessDto = Spread<ProcessProps, {
+export type ProcessDto = Spread<ProcessProps, {
   id: string;
   status: string;
-  progress?: ProcessProgressDto;
-  startedAt?: string;
-  estimatedCompletion?: string;
-  results?: ProcessResultsDto;
-  completedAt?: string;
+  progress: ProcessProgressDto | null;
+  startedAt: string | null;
+  estimatedCompletion: string | null;
+  results: ProcessResultsDto | null;
+  completedAt: string | null;
 }>
 
 export class Process extends Entity<
@@ -38,7 +40,24 @@ export class Process extends Entity<
     return new Process({
       status: PROCESS_STATUS.PENDING,
       filesToProcess,
+      progress: null,
+      startedAt: null,
+      estimatedCompletion: null,
+      results: null,
+      completedAt: null,
     }, new EntityID());
+  }
+
+  public static assemble(dto: ProcessDto): Process {
+    return new Process({
+      status: dto.status as ProcessStatus,
+      filesToProcess: dto.filesToProcess,
+      progress: dto.progress ? ProcessProgress.assemble(dto.progress) : null,
+      startedAt: dto.startedAt ? new Date(dto.startedAt) : null,
+      estimatedCompletion: dto.estimatedCompletion ? new Date(dto.estimatedCompletion) : null,
+      results: dto.results ? ProcessResults.assemble(dto.results) : null,
+      completedAt: dto.completedAt ? new Date(dto.completedAt) : null,
+    }, new EntityID(dto.id));
   }
 
   get status(): ProcessProps['status'] { return this.props.status; }
@@ -47,6 +66,7 @@ export class Process extends Entity<
   get startedAt(): ProcessProps['startedAt'] { return this.props.startedAt; }
   get estimatedCompletion(): ProcessProps['estimatedCompletion'] { return this.props.estimatedCompletion; }
   get results(): ProcessProps['results'] { return this.props.results; }
+  get completedAt(): ProcessProps['completedAt'] { return this.props.completedAt; }
 
   public start(filesToProcess: string[]): void {
     if (this.props.status !== PROCESS_STATUS.PENDING)
@@ -107,11 +127,11 @@ export class Process extends Entity<
     return {
       id: this._id.toString(),
       status: this.props.status,
-      progress: this.props.progress?.toDto(),
-      startedAt: this.props.startedAt?.toISOString(),
-      estimatedCompletion: this.props.estimatedCompletion?.toISOString(),
-      results: this.props.results?.toDto(),
-      completedAt: this.props.completedAt?.toISOString(),
+      progress: this.props.progress ? this.props.progress.toDto() : null,
+      startedAt: this.props.startedAt ? this.props.startedAt.toISOString() : null,
+      estimatedCompletion: this.props.estimatedCompletion ? this.props.estimatedCompletion.toISOString() : null,
+      results: this.props.results ? this.props.results.toDto() : null,
+      completedAt: this.props.completedAt ? this.props.completedAt.toISOString() : null,
       filesToProcess: this.props.filesToProcess,
     };
   }

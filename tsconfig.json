@@ -27,9 +27,9 @@
     // Defines the base for non-relative module resolution.
     "baseUrl": "./src",
 
-    // Defines aliases for module paths, improving import readability.
-    "paths": {
-      "@shared/*": ["shared/*"]
-    }
+    // Aliases don't play well when running TS files with "node --experimental-strip-types"
+    // "paths": {
+    //   "@shared/*": ["shared/*"]
+    // }
   }
 }

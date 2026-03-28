@@ -1,4 +1,4 @@
-import { areObjectsEqual, isPrimitive } from '@shared/utils/utils.js';
+import { areObjectsEqual, isPrimitive } from '../../utils/utils.ts';
 
 export interface ValueObjectProps {
   [index: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
