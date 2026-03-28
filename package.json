@@ -7,19 +7,27 @@
   "scripts": {
     "check-types": "tsc",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "migrate": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts up",
+    "migrate:undo": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts down",
+    "migrate:status": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts status"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^25.5.0",
+    "dotenv": "^17.3.1",
     "eslint": "^10.1.0",
     "globals": "^17.4.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.2"
+    "typescript-eslint": "^8.57.2",
+    "umzug": "^3.8.2"
   },
   "type": "module",
   "dependencies": {
-    "@aws-lambda-powertools/logger": "^2.32.0"
+    "@aws-lambda-powertools/logger": "^2.32.0",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
   }
 }
