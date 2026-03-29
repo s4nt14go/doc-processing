@@ -9,7 +9,7 @@ import { Spread } from '../../../shared/utils/utils.ts';
 
 export interface ProcessProps {
   status: ProcessStatus;
-  filesToProcess: string[];
+  filesToProcess: Record<string, string>; // Maps filename to its content
   progress: ProcessProgress | null;
   startedAt: Date | null;
   estimatedCompletion: Date | null;
@@ -36,7 +36,12 @@ export class Process extends Entity<
     super(props, id);
   }
 
-  public static create(filesToProcess: string[]): Process {
+  public static create(files: { name: string; content: string }[]): Process {
+    const filesToProcess = files.reduce((acc, file) => {
+      acc[file.name] = file.content;
+      return acc;
+    }, {} as Record<string, string>);
+
     return new Process({
       status: PROCESS_STATUS.PENDING,
       filesToProcess,
@@ -61,20 +66,20 @@ export class Process extends Entity<
   }
 
   get status(): ProcessProps['status'] { return this.props.status; }
-  get filesToProcess(): ProcessProps['filesToProcess'] { return this.props.filesToProcess; }
+  get filesToProcess(): Record<string, string> { return this.props.filesToProcess; }
+  get filenamesToProcess(): string[] { return Object.keys(this.props.filesToProcess); }
   get progress(): ProcessProps['progress'] { return this.props.progress; }
   get startedAt(): ProcessProps['startedAt'] { return this.props.startedAt; }
   get estimatedCompletion(): ProcessProps['estimatedCompletion'] { return this.props.estimatedCompletion; }
   get results(): ProcessProps['results'] { return this.props.results; }
   get completedAt(): ProcessProps['completedAt'] { return this.props.completedAt; }
 
-  public start(filesToProcess: string[]): void {
+  public start(): void {
     if (this.props.status !== PROCESS_STATUS.PENDING)
       throw new Error(`Cannot start process in status ${this.props.status}`);
 
     this.props.status = PROCESS_STATUS.RUNNING;
-    this.props.filesToProcess = filesToProcess;
-    this.props.progress = ProcessProgress.create(filesToProcess.length);
+    this.props.progress = ProcessProgress.create(this.filenamesToProcess.length);
     this.props.results = ProcessResults.create();
     this.props.startedAt = new Date();
   }
@@ -86,9 +91,10 @@ export class Process extends Entity<
       throw new Error(`Cannot update progress in status ${this.props.status}`);
 
     const { filesProcessed } = currentResults;
+    const filenamesToProcess = this.filenamesToProcess;
 
-    if (filesProcessed.some((f) => !this.props.filesToProcess.includes(f)))
-      throw new Error(`Unexpected files processed: ${filesProcessed.join(', ')}. Expected: ${this.props.filesToProcess.join(', ')}`);
+    if (filesProcessed.some((f) => !filenamesToProcess.includes(f)))
+      throw new Error(`Unexpected files processed: ${filesProcessed.join(', ')}. Expected: ${filenamesToProcess.join(', ')}`);
 
     this.props.results!.update(currentResults);
     this.props.progress!.filesProcessed(filesProcessed.length);
@@ -105,7 +111,7 @@ export class Process extends Entity<
     if (this.props.status !== PROCESS_STATUS.RUNNING)
       throw new Error(`Cannot complete process in status ${this.props.status}`);
 
-    const total = this.props.filesToProcess.length;
+    const total = this.filenamesToProcess.length;
     const totalAccProgress = this.props.progress!.processedFiles;
     const totalAccResults = this.props.results!.filesProcessed.length;
     if (total !== totalAccProgress || totalAccProgress !== totalAccResults)
@@ -127,12 +133,12 @@ export class Process extends Entity<
     return {
       id: this._id.toString(),
       status: this.props.status,
+      filesToProcess: this.props.filesToProcess,
       progress: this.props.progress ? this.props.progress.toDto() : null,
       startedAt: this.props.startedAt ? this.props.startedAt.toISOString() : null,
       estimatedCompletion: this.props.estimatedCompletion ? this.props.estimatedCompletion.toISOString() : null,
       results: this.props.results ? this.props.results.toDto() : null,
       completedAt: this.props.completedAt ? this.props.completedAt.toISOString() : null,
-      filesToProcess: this.props.filesToProcess,
     };
   }
 }
