@@ -25,9 +25,8 @@ export default $config({
     // 2. Define the REST API
     const api = new sst.aws.ApiGatewayV2('DocumentApi');
 
-    // 3. Register the StartProcess route
-    api.route('POST /process/start', {
-      handler: 'src/modules/documentProcessing/useCases/startProcess/index.handler',
+    // Common configuration for use case Lambdas
+    const commonConfig = {
       environment: {
         DATABASE_URL: databaseUrl,
       },
@@ -36,9 +35,21 @@ export default $config({
       nodejs: {
         install: ['pg', 'pg-hstore'],
       },
+    };
+
+    // 3. Register the StartProcess route
+    api.route('POST /process/start', {
+      handler: 'src/modules/documentProcessing/useCases/startProcess/index.handler',
+      ...commonConfig,
     });
 
-    // 4. Output the API URL
+    // 4. Register the GetStatus route
+    api.route('GET /process/{id}', {
+      handler: 'src/modules/documentProcessing/useCases/getStatus/index.handler',
+      ...commonConfig,
+    });
+
+    // 5. Output the API URL
     return {
       apiUrl: api.url,
     };

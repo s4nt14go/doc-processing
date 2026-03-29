@@ -27,6 +27,18 @@ export type ProcessDto = Spread<ProcessProps, {
   completedAt: string | null;
 }>
 
+/**
+ * Metadata version of Process for status polling.
+ * Excludes large file contents and uses optional properties instead of nulls.
+ */
+export type ProcessMetadata = Spread<Omit<ProcessDto, 'filesToProcess'>, {
+  progress?: NonNullable<ProcessDto['progress']>;
+  startedAt?: NonNullable<ProcessDto['startedAt']>;
+  estimatedCompletion?: NonNullable<ProcessDto['estimatedCompletion']>;
+  results?: NonNullable<ProcessDto['results']>;
+  completedAt?: NonNullable<ProcessDto['completedAt']>;
+}>;
+
 export class Process extends Entity<
   ProcessProps,
   ProcessDto
@@ -140,5 +152,22 @@ export class Process extends Entity<
       results: this.props.results ? this.props.results.toDto() : null,
       completedAt: this.props.completedAt ? this.props.completedAt.toISOString() : null,
     };
+  }
+
+  public toMetadata(): ProcessMetadata {
+    const dto = this.toDto();
+
+    const metadata: ProcessMetadata = {
+      id: dto.id,
+      status: dto.status,
+    };
+
+    if (dto.progress !== null) metadata.progress = dto.progress;
+    if (dto.startedAt !== null) metadata.startedAt = dto.startedAt;
+    if (dto.estimatedCompletion !== null) metadata.estimatedCompletion = dto.estimatedCompletion;
+    if (dto.results !== null) metadata.results = dto.results;
+    if (dto.completedAt !== null) metadata.completedAt = dto.completedAt;
+
+    return metadata;
   }
 }
