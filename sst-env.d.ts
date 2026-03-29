@@ -10,6 +10,10 @@ declare module "sst" {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
     }
+    "Process": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

@@ -22,7 +22,10 @@ export default $config({
       throw new Error('DATABASE_URL is not defined in your environment or .env file.');
     }
 
-    // 2. Define the REST API
+    // 2. Define the SQS Queue for document processing
+    const queue = new sst.aws.Queue('Process');
+
+    // 3. Define the REST API
     const api = new sst.aws.ApiGatewayV2('DocumentApi');
 
     // Common configuration for use case Lambdas
@@ -37,19 +40,20 @@ export default $config({
       },
     };
 
-    // 3. Register the StartProcess route
+    // 4. Register the StartProcess route
     api.route('POST /process/start', {
       handler: 'src/modules/documentProcessing/useCases/startProcess/index.handler',
+      link: [queue],
       ...commonConfig,
     });
 
-    // 4. Register the GetStatus route
+    // 5. Register the GetStatus route
     api.route('GET /process/{id}', {
       handler: 'src/modules/documentProcessing/useCases/getStatus/index.handler',
       ...commonConfig,
     });
 
-    // 5. Output the API URL
+    // 6. Output the API URL
     return {
       apiUrl: api.url,
     };
