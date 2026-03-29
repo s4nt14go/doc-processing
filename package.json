@@ -10,7 +10,9 @@
     "lint:fix": "eslint . --fix",
     "migrate": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts up",
     "migrate:undo": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts down",
-    "migrate:status": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts status"
+    "migrate:status": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts status",
+    "deploy": "source ./setAwsProfile.sh && export AWS_PROFILE=dev && sst deploy",
+    "upload-test": "node --experimental-strip-types --env-file=.env scripts/upload_txt.ts scripts/test_docs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -19,6 +21,7 @@
     "dotenv": "^17.3.1",
     "eslint": "^10.1.0",
     "globals": "^17.4.0",
+    "sst": "^3.19.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
     "umzug": "^3.8.2"
