@@ -26,7 +26,7 @@
     "dotenv": "^17.3.1",
     "eslint": "^10.1.0",
     "globals": "^17.4.0",
-    "sst": "^3.19.3",
+    "sst": "^4.5.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
     "umzug": "^3.8.2"

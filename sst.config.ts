@@ -9,6 +9,7 @@ export default $config({
     return {
       name: 'doc-processing',
       home: 'aws',
+      runtime: 'nodejs24.x',
     };
   },
   async run() {

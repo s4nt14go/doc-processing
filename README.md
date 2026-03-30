@@ -1,6 +1,6 @@
 # Document Processing System
 
-## 1. Technical Architecture (Cloud Native with SST v3)
+## 1. Technical Architecture (Cloud Native with SST v4)
 
 *   **REST API:** `sst.aws.Api` (AWS API Gateway) to expose the requested REST endpoints.
 *   **Asynchronicity:** `sst.aws.Queue` (SQS) to decouple request reception from heavy processing.
