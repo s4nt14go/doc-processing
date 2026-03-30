@@ -1,13 +1,22 @@
 import { PROCESS_STATUS, ProcessStatus } from './ProcessStatus.ts';
-import { ProcessProgress } from './ProcessProgress.ts';
-import type { ProcessProgressDto } from './ProcessProgress.ts';
-import { ProcessResults } from './ProcessResults.ts';
-import type { ProcessResultsDto } from './ProcessResults.ts';
 import { Entity } from '../../../shared/core/domain/Entity.ts';
 import { EntityID } from '../../../shared/core/domain/EntityID.ts';
 import { Spread } from '../../../shared/utils/utils.ts';
 
-export interface ProcessProps {
+interface ProcessProgress {
+  totalFiles: number;
+  processedFiles: number;
+  percentage: number;
+}
+
+interface ProcessResults {
+  totalWords: number;
+  totalLines: number;
+  mostFrequentWords: string[];
+  filesProcessed: string[];
+}
+
+interface ProcessProps {
   status: ProcessStatus;
   filesToProcess: Record<string, string>; // Maps filename to its content
   progress: ProcessProgress | null;
@@ -20,10 +29,10 @@ export interface ProcessProps {
 export type ProcessDto = Spread<ProcessProps, {
   id: string;
   status: string;
-  progress: ProcessProgressDto | null;
+  progress: ProcessProgress | null;
   startedAt: string | null;
   estimatedCompletion: string | null;
-  results: ProcessResultsDto | null;
+  results: ProcessResults | null;
   completedAt: string | null;
 }>
 
@@ -69,10 +78,10 @@ export class Process extends Entity<
     return new Process({
       status: dto.status as ProcessStatus,
       filesToProcess: dto.filesToProcess,
-      progress: dto.progress ? ProcessProgress.assemble(dto.progress) : null,
+      progress: dto.progress ? { ...dto.progress } : null,
       startedAt: dto.startedAt ? new Date(dto.startedAt) : null,
       estimatedCompletion: dto.estimatedCompletion ? new Date(dto.estimatedCompletion) : null,
-      results: dto.results ? ProcessResults.assemble(dto.results) : null,
+      results: dto.results ? dto.results : null,
       completedAt: dto.completedAt ? new Date(dto.completedAt) : null,
     }, new EntityID(dto.id));
   }
@@ -91,30 +100,49 @@ export class Process extends Entity<
       throw new Error(`Cannot start process in status ${this.props.status}`);
 
     this.props.status = PROCESS_STATUS.RUNNING;
-    this.props.progress = ProcessProgress.create(this.filenamesToProcess.length);
-    this.props.results = ProcessResults.create();
+    this.props.progress = {
+      totalFiles: this.filenamesToProcess.length,
+      processedFiles: 0,
+      percentage: 0
+    };
+    this.props.results = {
+      totalWords: 0,
+      totalLines: 0,
+      mostFrequentWords: [],
+      filesProcessed: [],
+    };
     this.props.startedAt = new Date();
   }
 
   // The exclamation marks below are intentional. If any of these properties are not defined, the system is in an inconsistent state, and we assume a runtime error is acceptable. Another alternative would be responding to the client with an error with a certain format, it depends on the client.
 
-  public filesProcessed(currentResults: ProcessResults): void {
+  public recordProcessResults(accumulatedResults: ProcessResults): void {
     if (this.props.status !== PROCESS_STATUS.RUNNING)
       throw new Error(`Cannot update progress in status ${this.props.status}`);
 
-    const { filesProcessed } = currentResults;
+    const { filesProcessed } = accumulatedResults;
     const filenamesToProcess = this.filenamesToProcess;
 
     if (filesProcessed.some((f) => !filenamesToProcess.includes(f)))
       throw new Error(`Unexpected files processed: ${filesProcessed.join(', ')}. Expected: ${filenamesToProcess.join(', ')}`);
 
-    this.props.results!.update(currentResults);
-    this.props.progress!.filesProcessed(filesProcessed.length);
+    this.props.results = accumulatedResults;
+    
+    // Update progress internally using the accumulated list length
+    const progress = this.props.progress!;
+    progress.processedFiles = filesProcessed.length;
+    
+    if (progress.processedFiles > progress.totalFiles)
+      throw new Error(`Processed files (${progress.processedFiles}) greater than ${progress.totalFiles} total files`);
 
+    progress.percentage = Math.round((progress.processedFiles / progress.totalFiles) * 100);
+
+    // Calculate estimated completion
     const now = new Date().getTime();
-    const averageProcessingTime = (now - this.props.startedAt!.getTime()) / this.props.progress!.processedFiles;
-    const remainingFilesToProcess = this.props.progress!.totalFiles - this.props.progress!.processedFiles;
+    const averageProcessingTime = (now - this.props.startedAt!.getTime()) / progress.processedFiles;
+    const remainingFilesToProcess = progress.totalFiles - progress.processedFiles;
     this.props.estimatedCompletion = new Date(now + averageProcessingTime * remainingFilesToProcess);
+    
     if (remainingFilesToProcess === 0) this.complete();
   }
 
@@ -146,10 +174,10 @@ export class Process extends Entity<
       id: this._id.toString(),
       status: this.props.status,
       filesToProcess: this.props.filesToProcess,
-      progress: this.props.progress ? this.props.progress.toDto() : null,
+      progress: this.props.progress ? { ...this.props.progress } : null,
       startedAt: this.props.startedAt ? this.props.startedAt.toISOString() : null,
       estimatedCompletion: this.props.estimatedCompletion ? this.props.estimatedCompletion.toISOString() : null,
-      results: this.props.results ? this.props.results.toDto() : null,
+      results: this.props.results ? this.props.results : null,
       completedAt: this.props.completedAt ? this.props.completedAt.toISOString() : null,
     };
   }

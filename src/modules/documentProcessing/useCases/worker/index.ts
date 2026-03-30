@@ -1,0 +1,44 @@
+import type { SQSEvent } from 'aws-lambda';
+import type { ModelStatic } from 'sequelize';
+import { ProcessRepo } from '../../repos/ProcessRepo.ts';
+import { Worker } from './Worker.ts';
+import {
+  initializeDatabase
+} from '../../../../shared/infra/sequelize/database.ts';
+import {
+  ProcessInstance
+} from '../../../../shared/infra/sequelize/models/ProcessModel.ts';
+import { logger } from '../../../../shared/infra/logger/Logger.ts';
+
+/**
+ * AWS Lambda Handler for the Worker use case.
+ * Triggered by SQS messages containing the processId.
+ */
+export const handler = async (event: SQSEvent) => {
+  try {
+    const sequelize = await initializeDatabase();
+    const processModel = sequelize.model('Process') as ModelStatic<ProcessInstance>;
+    const repo = new ProcessRepo(processModel);
+    const useCase = new Worker(repo);
+
+    for (const record of event.Records) {
+      const body = JSON.parse(record.body);
+      const { processId } = body;
+
+      if (!processId) {
+        logger.error('Worker Handler: No processId found in message body.', { body });
+        continue;
+      }
+
+      await useCase.execute({ processId });
+    }
+
+  } catch (error: any) {
+    logger.error('Error in WorkerHandler', { 
+      error: error.message,
+      stack: error.stack 
+    });
+    // In SQS handlers, throwing an error will make the message return to the queue (retry)
+    throw error;
+  }
+};
