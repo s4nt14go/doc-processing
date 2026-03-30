@@ -15,6 +15,7 @@
     "deploy": "npm run sst:dev -- deploy",
     "start-process": "node --experimental-strip-types --env-file=.env scripts/start_process.ts",
     "get-status": "node --experimental-strip-types --env-file=.env scripts/get_status.ts",
+    "get-results": "node --experimental-strip-types --env-file=.env scripts/get_results.ts",
     "stop-process": "node --experimental-strip-types --env-file=.env scripts/stop_process.ts",
     "list-processes": "node --experimental-strip-types --env-file=.env scripts/list_processes.ts"
   },

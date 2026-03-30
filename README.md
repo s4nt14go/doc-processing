@@ -112,6 +112,12 @@ Retrieves the current status, progress, and results of a process.
 npm run get-status <process_id>
 ```
 
+### Get Process Results
+Retrieves the full analysis results (only if status is COMPLETED).
+```bash
+npm run get-results <process_id>
+```
+
 ### Stop a Process
 Manually stops a running process.
 ```bash
