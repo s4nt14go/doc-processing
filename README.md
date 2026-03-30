@@ -100,6 +100,12 @@ Uploads all `.txt` files from a folder in batches.
 npm run start-process scripts/test_docs
 ```
 
+### List Processes
+Retrieves a list of all processes and their current states.
+```bash
+npm run list-processes
+```
+
 ### Check Process Status
 Retrieves the current status, progress, and results of a process.
 ```bash

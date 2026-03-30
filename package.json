@@ -15,7 +15,8 @@
     "deploy": "npm run sst:dev -- deploy",
     "start-process": "node --experimental-strip-types --env-file=.env scripts/start_process.ts",
     "get-status": "node --experimental-strip-types --env-file=.env scripts/get_status.ts",
-    "stop-process": "node --experimental-strip-types --env-file=.env scripts/stop_process.ts"
+    "stop-process": "node --experimental-strip-types --env-file=.env scripts/stop_process.ts",
+    "list-processes": "node --experimental-strip-types --env-file=.env scripts/list_processes.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-sqs": "^3.1019.0",

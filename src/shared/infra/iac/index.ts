@@ -48,6 +48,12 @@ export default async function main() {
     ...commonConfig,
   });
 
+  // Register the ListProcesses route
+  api.route('GET /process/list', {
+    handler: 'src/modules/documentProcessing/useCases/listProcesses/index.handler',
+    ...commonConfig,
+  });
+
   // Register the StopProcess route
   api.route('POST /process/stop/{id}', {
     handler: 'src/modules/documentProcessing/useCases/stopProcess/index.handler',
