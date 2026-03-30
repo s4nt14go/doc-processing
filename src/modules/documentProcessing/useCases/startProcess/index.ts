@@ -26,9 +26,9 @@ export const handler = async (event: any) => {
     const processModel = sequelize.model('Process') as ModelStatic<ProcessInstance>;
     
     // 3. Dependency Injection (Manual Composition Root for this Lambda)
-    const repo = new ProcessRepo(processModel);
-    const broker = new SqsMessageBroker();
-    const useCase = new StartProcess(repo, broker);
+    const processRepo = new ProcessRepo(processModel);
+    const messageBroker = new SqsMessageBroker();
+    const useCase = new StartProcess({ processRepo, messageBroker });
 
     // 4. Parse the incoming request payload
     let request: StartProcessRequestDto;

@@ -14,6 +14,7 @@ interface ProcessResults {
   totalLines: number;
   mostFrequentWords: string[];
   filesProcessed: string[];
+  fileSummaries: Record<string, string>;
 }
 
 interface ProcessProps {
@@ -110,6 +111,7 @@ export class Process extends Entity<
       totalLines: 0,
       mostFrequentWords: [],
       filesProcessed: [],
+      fileSummaries: {},
     };
     this.props.startedAt = new Date();
   }

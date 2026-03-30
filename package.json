@@ -36,6 +36,7 @@
   "type": "module",
   "dependencies": {
     "@aws-lambda-powertools/logger": "^2.32.0",
+    "@google/genai": "^1.47.0",
     "pg": "^8.20.0",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.8"

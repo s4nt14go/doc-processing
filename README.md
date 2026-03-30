@@ -9,7 +9,7 @@
 
 ## 2. Module Structure (DDD)
 
-The system's core will reside in `src/modules/documentProcessing/`:
+The system's core resides in `src/modules/documentProcessing/`:
 
 ```text
 ./

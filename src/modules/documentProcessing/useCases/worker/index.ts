@@ -2,6 +2,7 @@ import type { SQSEvent } from 'aws-lambda';
 import type { ModelStatic } from 'sequelize';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
 import { Worker } from './Worker.ts';
+import { GeminiAdapter } from '../../../../shared/infra/ai/GeminiAdapter.ts';
 import {
   initializeDatabase
 } from '../../../../shared/infra/sequelize/database.ts';
@@ -18,8 +19,9 @@ export const handler = async (event: SQSEvent) => {
   try {
     const sequelize = await initializeDatabase();
     const processModel = sequelize.model('Process') as ModelStatic<ProcessInstance>;
-    const repo = new ProcessRepo(processModel);
-    const useCase = new Worker(repo);
+    const processRepo = new ProcessRepo(processModel);
+    const summarizer = new GeminiAdapter();
+    const useCase = new Worker({ processRepo, summarizer });
 
     for (const record of event.Records) {
       const body = JSON.parse(record.body);

@@ -2,11 +2,14 @@ export default async function main() {
   // Database Connection String
   // SST reads from your local .env during 'sst deploy' or 'sst dev'.
   // The value is injected into the Lambda's environment variables.
-  const { DATABASE_URL } = process.env;
+  const { DATABASE_URL, GEMINI_API_KEY } = process.env;
 
   if (!DATABASE_URL) {
     throw new Error('DATABASE_URL is not defined in your environment or .env file.');
   }
+
+  if (!GEMINI_API_KEY)
+    throw new Error('GEMINI_API_KEY is not defined in your environment or .env file.');
 
   // Define the SQS Queue for document processing
   const queue = new sst.aws.Queue('Process', {
@@ -32,6 +35,10 @@ export default async function main() {
   queue.subscribe({
     handler: 'src/modules/documentProcessing/useCases/worker/index.handler',
     ...commonConfig,
+    environment: {
+      ...commonConfig.environment,
+      GEMINI_API_KEY,
+    },
     timeout: '2 minutes', // Allow enough time for processing multiple documents
   });
 

@@ -19,10 +19,16 @@ export interface StartProcessRequestDto {
  * 4. Notifies the message broker to trigger the asynchronous worker.
  */
 export class StartProcess {
-  constructor(
-    private readonly _processRepo: IProcessRepo,
-    private readonly _messageBroker: IMessageBroker,
-  ) {}
+  private readonly _processRepo: IProcessRepo;
+  private readonly _messageBroker: IMessageBroker;
+
+  constructor(dependencies: {
+    processRepo: IProcessRepo;
+    messageBroker: IMessageBroker;
+  }) {
+    this._processRepo = dependencies.processRepo;
+    this._messageBroker = dependencies.messageBroker;
+  }
 
   /**
    * Executes the use case.

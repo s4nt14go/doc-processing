@@ -1,6 +1,7 @@
 import { IProcessRepo } from '../../repos/IProcessRepo.ts';
 import { logger } from '../../../../shared/infra/logger/Logger.ts';
 import { PROCESS_STATUS } from '../../domain/ProcessStatus.ts';
+import { ISummarizer } from '../../services/ISummarizer.ts';
 
 const { APP_STAGE, TEST_WORKER_DELAY_SECONDS, TEST_WORKER_FORCE_FAILURE } = process.env;
 if (!APP_STAGE)
@@ -14,7 +15,16 @@ export interface WorkerRequestDto {
  * Processes files within a batch.
  */
 export class Worker {
-  constructor(private readonly _processRepo: IProcessRepo) {}
+  private readonly _processRepo: IProcessRepo;
+  private readonly _summarizer: ISummarizer;
+
+  constructor(dependencies: {
+    processRepo: IProcessRepo;
+    summarizer: ISummarizer;
+  }) {
+    this._processRepo = dependencies.processRepo;
+    this._summarizer = dependencies.summarizer;
+  }
 
   public async execute(request: WorkerRequestDto): Promise<void> {
     const { processId } = request;
@@ -37,6 +47,7 @@ export class Worker {
       let totalWords = 0;
       let totalLines = 0;
       const processedFilenames: string[] = [];
+      const fileSummaries: Record<string, string> = {};
 
       for (const filename of filenames) {
         // Re-fetch to check if status was changed (STOPPED) or if another worker is competing
@@ -70,6 +81,9 @@ export class Worker {
         totalLines += lines.length;
         processedFilenames.push(filename);
 
+        // AI: Generate summary
+        fileSummaries[filename] = await this._summarizer.summarize(content);
+
         // Accurate Word Frequency: process every word
         for (const word of words) {
           const cleanWord = word.toLowerCase().replace(/[^a-z0-9áéíóúñ]/g, '');
@@ -89,7 +103,8 @@ export class Worker {
           totalWords,
           totalLines,
           filesProcessed: [...processedFilenames],
-          mostFrequentWords: topWords
+          mostFrequentWords: topWords,
+          fileSummaries: { ...fileSummaries },
         });
         await this._processRepo.save(process);
         
