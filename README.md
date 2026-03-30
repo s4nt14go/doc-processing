@@ -4,7 +4,7 @@
 
 *   **REST API:** `sst.aws.Api` (AWS API Gateway) to expose the requested REST endpoints.
 *   **Asynchronicity:** `sst.aws.Queue` (SQS) to decouple request reception from heavy processing.
-*   **Database:** PostgreSQL managed with **Sequelize ORM** for persisting states and results.
+*   **Database:** **CockroachDB** (PostgreSQL-compatible) managed with **Sequelize ORM**. Chosen for its serverless architecture, which provides effortless scaling and high availability.
 *   **Intelligent Processing:** Integration with **Google Gemini API** (chosen for its generous free tier) to generate content summary.
 
 ## 2. Module Structure (DDD)
@@ -18,7 +18,9 @@ The system's core resides in `src/modules/documentProcessing/`:
 │   ├── list_processes.ts   # GET /process/list
 │   ├── get_status.ts       # GET /process/status/{id}
 │   ├── get_results.ts      # GET /process/results/{id}
-│   └── stop_process.ts     # POST /process/stop/{id}
+│   ├── stop_process.ts     # POST /process/stop/{id}
+│   ├── test_docs/          # Test documents in English
+│   └── test_docs2/         # Test documents in Spanish
 ├── src/
 │   ├── modules/documentProcessing/
 │   │   ├── domain/         # Entities and Enums (Process, ProcessStatus)
@@ -110,7 +112,11 @@ The project includes TypeScript scripts to interact with the API from the termin
 ### Start a Process
 Uploads all `.txt` files from a folder in batches.
 ```bash
+# Process English documents
 npm run start-process scripts/test_docs
+
+# Process Spanish documents
+npm run start-process scripts/test_docs2
 ```
 
 ### List Processes

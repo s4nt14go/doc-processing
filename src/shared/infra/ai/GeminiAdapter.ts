@@ -29,7 +29,7 @@ export class GeminiAdapter implements ISummarizer {
     try {
       logger.info('GeminiAdapter: Requesting summary from Gemini API...');
       
-      const prompt = `Please provide a concise summary (max 3 sentences) of the following text:\n\n${content}`;
+      const prompt = `Please provide a concise summary (max 300 characters) of the following text. The summary MUST be in the same language as the original text:\n\n${content}`;
       
       const response = await this._ai.models.generateContent({
         model: 'gemma-3-27b-it',
