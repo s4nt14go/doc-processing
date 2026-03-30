@@ -114,8 +114,6 @@ export class Process extends Entity<
     this.props.startedAt = new Date();
   }
 
-  // The exclamation marks below are intentional. If any of these properties are not defined, the system is in an inconsistent state, and we assume a runtime error is acceptable. Another alternative would be responding to the client with an error with a certain format, it depends on the client.
-
   public recordProcessResults(accumulatedResults: ProcessResults): void {
     if (this.props.status !== PROCESS_STATUS.RUNNING)
       throw new Error(`Cannot update progress in status ${this.props.status}`);

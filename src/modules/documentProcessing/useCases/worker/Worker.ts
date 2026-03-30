@@ -1,5 +1,10 @@
 import { IProcessRepo } from '../../repos/IProcessRepo.ts';
 import { logger } from '../../../../shared/infra/logger/Logger.ts';
+import { PROCESS_STATUS } from '../../domain/ProcessStatus.ts';
+
+const { APP_STAGE, TEST_WORKER_DELAY_SECONDS, TEST_WORKER_FORCE_FAILURE } = process.env;
+if (!APP_STAGE)
+  throw new Error('APP_STAGE environment variable is required but not defined.');
 
 export interface WorkerRequestDto {
   processId: string;
@@ -23,6 +28,7 @@ export class Worker {
 
     try {
       process.start();
+      const myStartedAt = process.startedAt!.getTime();
       await this._processRepo.save(process);
 
       const filenames = process.filenamesToProcess;
@@ -33,6 +39,27 @@ export class Worker {
       const processedFilenames: string[] = [];
 
       for (const filename of filenames) {
+        // Re-fetch to check if status was changed (STOPPED) or if another worker is competing
+        const dbProcess = await this._processRepo.findById(processId);
+        
+        if (!dbProcess || dbProcess.status !== PROCESS_STATUS.RUNNING) {
+          logger.info('Worker: Process no longer RUNNING. Aborting.', { 
+            processId, 
+            status: dbProcess?.status 
+          });
+          return;
+        }
+
+        // If someone else started earlier than me, I am a redundant duplicate. Avoid race conditions.
+        if (dbProcess.startedAt && dbProcess.startedAt.getTime() < myStartedAt) {
+          logger.info('Worker: An earlier instance is already processing. Aborting late duplicate.', { 
+            processId,
+            myStartedAt: new Date(myStartedAt).toISOString(),
+            earlierStartedAt: dbProcess.startedAt.toISOString()
+          });
+          return;
+        }
+
         const content = process.filesToProcess[filename];
         
         // Analysis: lines and words
@@ -71,6 +98,23 @@ export class Worker {
           words: words.length, 
           lines: lines.length 
         });
+
+        // --- DEBUG HOOKS ---
+        // These hooks facilitate testing 'STOPPED' and 'FAILED' functionality.
+        // Safety: Only allowed if APP_STAGE does not contain 'prod'.
+        if (!APP_STAGE!.toString().includes('prod')) {
+          const debugDelay = TEST_WORKER_DELAY_SECONDS;
+          if (debugDelay) {
+            logger.info(`Worker: Debug delay enabled (${debugDelay}s). Waiting...`, { processId, stage: APP_STAGE });
+            await new Promise(resolve => setTimeout(resolve, parseInt(debugDelay) * 1000));
+          }
+
+          if (TEST_WORKER_FORCE_FAILURE === 'true') {
+            logger.info('Worker: Debug force failure enabled. Throwing error...', { processId, stage: APP_STAGE });
+            throw new Error('Simulated error for testing');
+          }
+        }
+        // -------------------
       }
 
       logger.info('Worker: Successfully completed process.', { processId });

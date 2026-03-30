@@ -2,9 +2,9 @@ export default async function main() {
   // Database Connection String
   // SST reads from your local .env during 'sst deploy' or 'sst dev'.
   // The value is injected into the Lambda's environment variables.
-  const databaseUrl = process.env.DATABASE_URL;
+  const { DATABASE_URL } = process.env;
 
-  if (!databaseUrl) {
+  if (!DATABASE_URL) {
     throw new Error('DATABASE_URL is not defined in your environment or .env file.');
   }
 
@@ -19,7 +19,8 @@ export default async function main() {
   // Common configuration for use case Lambdas
   const commonConfig = {
     environment: {
-      DATABASE_URL: databaseUrl,
+      DATABASE_URL,
+      APP_STAGE: $app.stage,
     },
     // Sequelize requires pg and pg-hstore to be installed manually in the Lambda environment
     // because they are often not correctly bundled by esbuild.
@@ -42,13 +43,14 @@ export default async function main() {
   });
 
   // Register the GetStatus route
-  api.route('GET /process/{id}', {
+  api.route('GET /process/status/{id}', {
     handler: 'src/modules/documentProcessing/useCases/getStatus/index.handler',
     ...commonConfig,
   });
 
-  // Output the API URL
-  return {
-    apiUrl: api.url,
-  };
+  // Register the StopProcess route
+  api.route('POST /process/stop/{id}', {
+    handler: 'src/modules/documentProcessing/useCases/stopProcess/index.handler',
+    ...commonConfig,
+  });
 };

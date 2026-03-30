@@ -4,7 +4,7 @@ import path from 'path';
 /**
  * Script to upload .txt files from a folder to the Document Processing API.
  * Run this command from the project root:
- * node --experimental-strip-types --env-file=.env scripts/upload_txt.ts <folder_path>
+ * node --env-file=.env scripts/start_process.ts <folder_path>
  */
 
 const API_URL = process.env.API_URL;
@@ -20,7 +20,7 @@ async function uploadFiles() {
 
   if (!folderPath) {
     console.error('Please provide a folder path.');
-    console.log('Usage: node --experimental-strip-types --env-file=.env upload_txt.ts <folder_path>');
+    console.log('Usage: node --env-file=.env scripts/start_process.ts <folder_path>');
     process.exit(1);
   }
 
@@ -43,7 +43,8 @@ async function uploadFiles() {
     return;
   }
 
-  console.log(`Found ${files.length} .txt files. Starting upload to ${API_URL}...`);
+  const url = `${API_URL}/process/start`;
+  console.log(`Found ${files.length} .txt files. Starting upload to ${url}...`);
 
   let currentBatch: { name: string, content: string }[] = [];
   let currentBatchSize = 0;
@@ -58,7 +59,7 @@ async function uploadFiles() {
     
     if (currentBatchSize + fileSize + overhead > MAX_PAYLOAD_SIZE) {
       if (currentBatch.length > 0) {
-        await sendBatch(currentBatch);
+        await sendBatch(currentBatch, url);
         currentBatch = [];
         currentBatchSize = 0;
       }
@@ -75,17 +76,17 @@ async function uploadFiles() {
   }
 
   if (currentBatch.length > 0) {
-    await sendBatch(currentBatch);
+    await sendBatch(currentBatch, url);
   }
 
   console.log('All batches processed.');
 }
 
-async function sendBatch(files: { name: string, content: string }[]) {
+async function sendBatch(files: { name: string, content: string }[], url: string) {
   console.log(`Sending batch with ${files.length} files...`);
   
   try {
-    const response = await fetch(API_URL!, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

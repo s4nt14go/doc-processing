@@ -1,6 +1,6 @@
 import type { ModelStatic } from 'sequelize';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
-import { GetStatus } from './GetStatus.ts';
+import { StopProcess } from './StopProcess.ts';
 import {
   initializeDatabase
 } from '../../../../shared/infra/sequelize/database.ts';
@@ -10,9 +10,9 @@ import {
 import { logger } from '../../../../shared/infra/logger/Logger.ts';
 
 /**
- * AWS Lambda Handler for the GetStatus use case.
- * Orchestrates the database connection, repository instantiation,
- * and use case execution for the GET /process/{id} endpoint.
+ * AWS Lambda Handler for the StopProcess use case.
+ * Orchestrates the database connection, repository instantiation, 
+ * and use case execution for the POST /process/stop endpoint.
  */
 export const handler = async (event: any) => {
   try {
@@ -24,7 +24,7 @@ export const handler = async (event: any) => {
     
     // 3. Dependency Injection (Manual Composition Root for this Lambda)
     const repo = new ProcessRepo(processModel);
-    const useCase = new GetStatus(repo);
+    const useCase = new StopProcess(repo);
 
     // 4. Extract processId from the path parameters
     const processId = event.pathParameters?.id;
@@ -47,12 +47,12 @@ export const handler = async (event: any) => {
     };
 
   } catch (error: any) {
-    logger.error('Error in GetStatusHandler', { 
+    logger.error('Error in StopProcessHandler', { 
       error: error.message,
       stack: error.stack 
     });
 
-    // Consistent with StartProcess: Return 500 on failure for now.
+    // 7. Simplified error handling: Always return 500 on failure for now.
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },

@@ -13,7 +13,9 @@
     "migrate:status": "node --experimental-strip-types src/shared/infra/sequelize/migrate.ts status",
     "sst:dev": "source ./setAwsProfile.sh && export AWS_PROFILE=dev && sst",
     "deploy": "npm run sst:dev -- deploy",
-    "upload-test": "node --experimental-strip-types --env-file=.env scripts/upload_txt.ts scripts/test_docs"
+    "start-process": "node --experimental-strip-types --env-file=.env scripts/start_process.ts",
+    "get-status": "node --experimental-strip-types --env-file=.env scripts/get_status.ts",
+    "stop-process": "node --experimental-strip-types --env-file=.env scripts/stop_process.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-sqs": "^3.1019.0",

@@ -82,3 +82,32 @@ The system implements the following states to manage the lifecycle of a document
   }
 }
 ```
+
+## 6. Debugging & Testing Hooks
+
+The Worker includes hooks that can be activated via environment variables (e.g., AWS Console) to facilitate testing of edge cases:
+
+*   `TEST_WORKER_DELAY_SECONDS`: Adds a delay (in seconds) after processing each file. Useful for testing the **STOP** functionality.
+*   `TEST_WORKER_FORCE_FAILURE`: If set to `true`, the Worker will throw an error during processing to test the **FAILED** state logic.
+
+## 7. Client Scripts
+
+The project includes TypeScript scripts to interact with the API from the terminal. These scripts automatically use the `API_URL` defined in your `.env` file.
+
+### Start a Process
+Uploads all `.txt` files from a folder in batches.
+```bash
+npm run start-process scripts/test_docs
+```
+
+### Check Process Status
+Retrieves the current status, progress, and results of a process.
+```bash
+npm run get-status <process_id>
+```
+
+### Stop a Process
+Manually stops a running process.
+```bash
+npm run stop-process <process_id>
+```
