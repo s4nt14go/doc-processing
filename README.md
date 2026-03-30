@@ -12,21 +12,34 @@
 The system's core will reside in `src/modules/documentProcessing/`:
 
 ```text
-src/modules/documentProcessing/
-├── domain/
-│   ├── Process.ts          # Main entity with states (PENDING, RUNNING, etc.)
-│   └── ProcessStatus.ts    # Enum for states (PENDING, RUNNING, COMPLETED, etc.)
-├── repos/                  # Repositories
-├── useCases/
-│   ├── startProcess/
-│   ├── stopProcess/
-│   ├── getStatus/
-│   └── worker/             # Worker logic that consumes from SQS
-└── shared/infra/
-           ├── sequelize/ # config, migrations, models
-           ├── iac/       # SST constructs (API, Queue)
-           ├── files/     # FileLoader.ts (Local/S3 Adapter)
-           └── ai/        # Gemini.ts (AI Adapter)
+./
+├── scripts/                # Client TypeScript scripts
+│   ├── start_process.ts    # POST /process/start
+│   ├── list_processes.ts   # GET /process/list
+│   ├── get_status.ts       # GET /process/status/{id}
+│   ├── get_results.ts      # GET /process/results/{id}
+│   └── stop_process.ts     # POST /process/stop/{id}
+├── src/
+│   ├── modules/documentProcessing/
+│   │   ├── domain/         # Entities and Enums (Process, ProcessStatus)
+│   │   ├── repos/          # Repositories (IProcessRepo, ProcessRepo)
+│   │   └── useCases/       # Application logic
+│   │       ├── startProcess/
+│   │       ├── listProcesses/
+│   │       ├── getStatus/
+│   │       ├── getResults/
+│   │       ├── stopProcess/
+│   │       └── worker/     # SQS Consumer logic
+│   └── shared/
+│       ├── core/           # DDD Base Classes
+│       └── infra/          # Infrastructure implementations
+│           ├── ai/         # AI Adapter (Gemini)
+│           ├── iac/        # SST/Pulumi constructs (API, Queue)
+│           ├── logger/     # Centralized logging
+│           ├── sequelize/  # Database (models, migrations)
+│           └── sqs/        # Message Broker implementation
+├── sst.config.ts           # SST v4 entry point
+└── package.json            # Scripts and dependencies
 ```
 
 ## 3. Processing Flow
