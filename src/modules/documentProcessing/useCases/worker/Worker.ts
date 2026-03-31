@@ -43,6 +43,7 @@ export class Worker {
       const globalWordFrequencies = new Map<string, number>();
       let totalWords = 0;
       let totalLines = 0;
+      let totalCharacters = 0;
       const processedFilenames: string[] = [];
       const fileSummaries: Record<string, string> = {};
 
@@ -76,6 +77,7 @@ export class Worker {
 
         totalWords += words.length;
         totalLines += lines.length;
+        totalCharacters += content.length;
         processedFilenames.push(filename);
 
         // AI: Generate summary
@@ -99,6 +101,7 @@ export class Worker {
         process.recordProcessResults({
           totalWords,
           totalLines,
+          totalCharacters,
           filesProcessed: [...processedFilenames],
           mostFrequentWords: topWords,
           fileSummaries: { ...fileSummaries },

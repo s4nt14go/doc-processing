@@ -12,6 +12,7 @@ interface ProcessProgress {
 interface ProcessResults {
   totalWords: number;
   totalLines: number;
+  totalCharacters: number;
   mostFrequentWords: string[];
   filesProcessed: string[];
   fileSummaries: Record<string, string>;
@@ -109,6 +110,7 @@ export class Process extends Entity<
     this.props.results = {
       totalWords: 0,
       totalLines: 0,
+      totalCharacters: 0,
       mostFrequentWords: [],
       filesProcessed: [],
       fileSummaries: {},
