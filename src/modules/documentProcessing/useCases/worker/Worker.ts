@@ -38,14 +38,21 @@ export class Worker {
     logger.info('Worker: Starting execution for process.', { processId, concurrency: CONCURRENCY });
 
     const process = await this._processRepo.findById(processId);
-    if (!process) {
+    if (!process)
       throw new Error(`Process with id ${processId} not found`);
-    }
 
     try {
-      process.start();
+      // Allow processing if status is PENDING, FAILED (retry) or even RUNNING (already picked up)
+      if (process.status === PROCESS_STATUS.PENDING || process.status === PROCESS_STATUS.FAILED) {
+        process.start();
+        await this._processRepo.save(process);
+      } else if (process.status !== PROCESS_STATUS.RUNNING) {
+        logger.info('Worker: Process is not in a startable state.', { processId, status: process.status });
+        return;
+      }
+
+      // We use the current startedAt as our unique execution ID for this worker session
       const myStartedAt = process.startedAt!.getTime();
-      await this._processRepo.save(process);
 
       const filenames = [...process.filenamesToProcess];
       const globalWordFrequencies = new Map<string, number>();
@@ -61,14 +68,31 @@ export class Worker {
         
         // 1. Re-fetch and integrity check before starting a new chunk
         const dbProcess = await this._processRepo.findById(processId);
-        if (!dbProcess || dbProcess.status !== PROCESS_STATUS.RUNNING) {
-          logger.info('Worker: Process no longer RUNNING. Aborting chunk.', { processId, status: dbProcess?.status });
+        
+        // We allow RUNNING (standard) or FAILED (in case we are retrying and haven't updated it yet)
+        const isValidStatus = dbProcess && (dbProcess.status === PROCESS_STATUS.RUNNING || dbProcess.status === PROCESS_STATUS.FAILED);
+        
+        if (!isValidStatus) {
+          logger.info('Worker: Process no longer in a valid state for processing. Aborting chunk.', { processId, status: dbProcess?.status });
           return;
         }
 
-        if (dbProcess.startedAt && dbProcess.startedAt.getTime() < myStartedAt) {
-          logger.info('Worker: Earlier instance detected. Aborting chunk.', { processId });
-          return;
+        // If someone else started earlier than me, check if they are still active.
+        if (dbProcess!.startedAt && dbProcess!.startedAt.getTime() < myStartedAt) {
+          if (dbProcess!.status === PROCESS_STATUS.RUNNING) {
+            logger.info('Worker: An earlier instance is ACTIVE and processing. Aborting late duplicate chunk.', { 
+              processId,
+              myStartedAt: new Date(myStartedAt).toISOString(),
+              earlierStartedAt: dbProcess!.startedAt.toISOString()
+            });
+            return;
+          }
+          
+          // If the earlier instance is not RUNNING (e.g., it FAILED), I take over.
+          logger.info('Worker: An earlier instance exists but is not RUNNING. Taking over processing.', { 
+            processId,
+            earlierStatus: dbProcess!.status 
+          });
         }
 
         // 2. Execute chunk in parallel
