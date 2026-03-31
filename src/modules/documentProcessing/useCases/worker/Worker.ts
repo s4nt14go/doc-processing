@@ -42,11 +42,11 @@ export class Worker {
       throw new Error(`Process with id ${processId} not found`);
 
     try {
-      // Allow processing if status is PENDING, FAILED (retry) or even RUNNING (already picked up)
+      // 1. Initial State Handling: Start if PENDING/FAILED
       if (process.status === PROCESS_STATUS.PENDING || process.status === PROCESS_STATUS.FAILED) {
         process.start();
         await this._processRepo.save(process);
-      } else if (process.status !== PROCESS_STATUS.RUNNING) {
+      } else if (process.status !== PROCESS_STATUS.RUNNING) { // Abort if STOPPED or COMPLETED. If RUNNING, another instance is already processing. We continue here but the 'First One Wins' logic (when we compare startedAt below) will decide which instance prevails.
         logger.info('Worker: Process is not in a startable state.', { processId, status: process.status });
         return;
       }

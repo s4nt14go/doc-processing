@@ -8,6 +8,26 @@
 *   **Intelligent Processing:** Integration with **Google Gemini API** (chosen for its generous free tier) to generate content summary.
 *   **Structured Logging:** Implemented using **AWS Lambda Powertools**, providing JSON-formatted logs for better observability and traceability in CloudWatch.
 
+### Infrastructure Diagram
+```mermaid
+graph TD
+    User((User/Client)) -->|REST API| APIGateway[AWS API Gateway]
+    
+    subgraph "SST Infrastructure"
+        APIGateway -->|POST /process/start| StartLambda[StartProcess Lambda]
+        APIGateway -->|GET /process/status| StatusLambda[GetStatus Lambda]
+        APIGateway -->|GET /process/list| ListLambda[ListProcesses Lambda]
+        APIGateway -->|POST /process/stop| StopLambda[StopProcess Lambda]
+        
+        StartLambda -->|Push process_id| SQS[AWS SQS Queue]
+        SQS -->|Trigger| WorkerLambda[Worker Lambda]
+        SQS -.->|3 Failures| DLQ[Dead Letter Queue]
+        
+        StartLambda & StatusLambda & ListLambda & StopLambda & WorkerLambda -->|ORM| DB[(CockroachDB)]
+        WorkerLambda -->|Summarize| Gemini[Google Gemini API]
+    end
+```
+
 ## 2. Module Structure (DDD)
 
 The system's core resides in `src/modules/documentProcessing/`:
@@ -56,13 +76,48 @@ The system's core resides in `src/modules/documentProcessing/`:
     *   **Update:** Updates progress and partial results in the DB.
 3.  **Finalization:** Upon completion, the state changes to `COMPLETED`. If a fatal error occurs, it changes to `FAILED`.
 
+### Worker Logic Diagram
+```mermaid
+flowchart TD
+    Start([Start Message]) --> Fetch[Fetch Process from DB]
+    Fetch --> Status{Status PENDING or FAILED?}
+    Status -- Yes --> MarkRunning[Mark as RUNNING in DB]
+    Status -- No --> IsRunning{Status RUNNING?}
+    IsRunning -- No --> Exit([Exit])
+    
+    MarkRunning --> LoopFiles[Loop through File Chunks]
+    IsRunning -- Yes --> LoopFiles
+    
+    LoopFiles --> Chunk{More Chunks?}
+    Chunk -- No --> Complete[Mark as COMPLETED] --> End([End])
+    
+    Chunk -- Yes --> Refetch[Re-fetch latest from DB]
+    Refetch --> ValidStatus{Status RUNNING or FAILED?}
+    ValidStatus -- No --> Exit
+    
+    ValidStatus -- Yes --> EarlierInstance{Earlier startedAt detected?}
+    EarlierInstance -- Yes --> OtherActive{Is earlier still RUNNING?}
+    OtherActive -- Yes --> Exit
+    OtherActive -- No --> TakeOver[Take Over: Continue] --> Analyze
+    EarlierInstance -- No --> Analyze
+    
+    subgraph "Chunk Processing (Parallel)"
+        Analyze[Local Stats Analysis]
+        AI[Gemini Summarization]
+    end
+    
+    Analyze & AI --> Save[Save Progress & Partial Results]
+    Save --> LoopFiles
+    
+    Error[Catch Error] --> MarkFailed[Mark as FAILED] --> End
+```
+
 ## 4. System States
 
 The system implements the following states to manage the lifecycle of a document processing task:
 
 *   **PENDING**: Process created in the database but not yet picked up by the worker.
 *   **RUNNING**: Processing is currently in progress (files are being analyzed).
-*   **PAUSED**: Process temporarily paused (available for future implementation).
 *   **COMPLETED**: Process finished successfully, and all results are available.
 *   **FAILED**: Process terminated due to an error during execution.
 *   **STOPPED**: Process was manually stopped by the user via the API.
