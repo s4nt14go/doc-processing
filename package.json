@@ -17,7 +17,8 @@
     "get-status": "node --experimental-strip-types --env-file=.env scripts/get_status.ts",
     "get-results": "node --experimental-strip-types --env-file=.env scripts/get_results.ts",
     "stop-process": "node --experimental-strip-types --env-file=.env scripts/stop_process.ts",
-    "list-processes": "node --experimental-strip-types --env-file=.env scripts/list_processes.ts"
+    "list-processes": "node --experimental-strip-types --env-file=.env scripts/list_processes.ts",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "@aws-sdk/client-sqs": "^3.1019.0",
@@ -31,7 +32,8 @@
     "sst": "^4.5.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
-    "umzug": "^3.8.2"
+    "umzug": "^3.8.2",
+    "vitest": "^4.1.2"
   },
   "type": "module",
   "dependencies": {
