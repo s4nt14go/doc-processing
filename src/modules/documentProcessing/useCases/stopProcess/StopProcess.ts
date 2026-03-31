@@ -4,7 +4,7 @@ import { ProcessMetadata } from '../../domain/Process.ts';
 export class StopProcess {
   private readonly processRepo: IProcessRepo;
 
-  constructor(processRepo: IProcessRepo) {
+  public constructor(processRepo: IProcessRepo) {
     this.processRepo = processRepo;
   }
 

@@ -47,7 +47,7 @@ export async function up(queryInterface: QueryInterface) {
           allowNull: false,
         },
       },
-      { transaction }
+      { transaction },
     );
 
     // 2. Add a CHECK constraint to ensure status only accepts valid domain values

@@ -1,20 +1,21 @@
-import type { ModelStatic } from 'sequelize';
+import { ModelStatic } from 'sequelize';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
 import { GetStatus } from './GetStatus.ts';
 import {
-  initializeDatabase
+  initializeDatabase,
 } from '../../../../shared/infra/sequelize/database.ts';
 import {
-  ProcessInstance
+  ProcessInstance,
 } from '../../../../shared/infra/sequelize/models/ProcessModel.ts';
-import { logger } from '../../../../shared/infra/logger/Logger.ts';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { handlerCatch } from '../../../../shared/utils/utils.ts';
 
 /**
  * AWS Lambda Handler for the GetStatus use case.
  * Orchestrates the database connection, repository instantiation,
  * and use case execution for the GET /process/{id} endpoint.
  */
-export const handler = async (event: any) => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // 1. Initialize the database connection (optimized for Lambda warm starts)
     const sequelize = await initializeDatabase();
@@ -29,7 +30,7 @@ export const handler = async (event: any) => {
     // 4. Extract processId from the path parameters
     const processId = event.pathParameters?.id;
 
-    if (!processId || typeof processId !== 'string')
+    if (!processId)
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -46,19 +47,7 @@ export const handler = async (event: any) => {
       body: JSON.stringify(processDto),
     };
 
-  } catch (error: any) {
-    logger.error('Error in GetStatusHandler', { 
-      error: error.message,
-      stack: error.stack 
-    });
-
-    // Consistent with StartProcess: Return 500 on failure for now.
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        error: error.message || 'Internal Server Error' 
-      }),
-    };
+  } catch (e: unknown) {
+    return handlerCatch('Error in GetStatusHandler', e);
   }
 };

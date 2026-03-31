@@ -5,7 +5,7 @@ import { ProcessMetadata } from '../../domain/Process.ts';
  * Use case responsible for listing all document processing tasks.
  */
 export class ListProcesses {
-  constructor(private readonly _processRepo: IProcessRepo) {}
+  public constructor(private readonly _processRepo: IProcessRepo) {}
 
   /**
    * Executes the use case.

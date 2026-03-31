@@ -2,6 +2,7 @@
  * Script to stop a document processing task.
  * Usage: node --env-file=.env scripts/stop_process.ts <process_id>
  */
+import { getErrMsg, hasErrorProp } from '../src/shared/utils/utils.ts';
 
 const API_URL = process.env.API_URL;
 
@@ -26,19 +27,21 @@ async function stopProcess() {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await response.json() as any;
 
     if (response.ok) {
       console.log('Process successfully stopped:', JSON.stringify(result, null, 2));
     } else {
-      console.error(`Failed to stop process: ${result.error || response.statusText}`);
+      const errorMessage = hasErrorProp(result) ? result.error : response.statusText;
+      console.error(`Failed to stop process: ${errorMessage}`);
     }
-  } catch (error: any) {
-    console.error(`Error stopping process: ${error.message}`);
+  } catch (e: unknown) {
+    console.error(`Error stopping process: ${getErrMsg(e)}`);
   }
 }
 

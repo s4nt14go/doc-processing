@@ -2,6 +2,7 @@ import { IProcessRepo } from '../../repos/IProcessRepo.ts';
 import { logger } from '../../../../shared/infra/logger/Logger.ts';
 import { PROCESS_STATUS } from '../../domain/ProcessStatus.ts';
 import { ISummarizer } from '../../services/ISummarizer.ts';
+import { getErrMsg } from '../../../../shared/utils/utils.ts';
 
 const { APP_STAGE, TEST_WORKER_DELAY_SECONDS, TEST_WORKER_FORCE_FAILURE } = process.env;
 if (!APP_STAGE)
@@ -15,7 +16,7 @@ export class Worker {
   private readonly _processRepo: IProcessRepo;
   private readonly _summarizer: ISummarizer;
 
-  constructor(dependencies: {
+  public constructor(dependencies: {
     processRepo: IProcessRepo;
     summarizer: ISummarizer;
   }) {
@@ -52,7 +53,7 @@ export class Worker {
         if (!dbProcess || dbProcess.status !== PROCESS_STATUS.RUNNING) {
           logger.info('Worker: Process no longer RUNNING. Aborting.', { 
             processId, 
-            status: dbProcess?.status 
+            status: dbProcess?.status, 
           });
           return;
         }
@@ -62,7 +63,7 @@ export class Worker {
           logger.info('Worker: An earlier instance is already processing. Aborting late duplicate.', { 
             processId,
             myStartedAt: new Date(myStartedAt).toISOString(),
-            earlierStartedAt: dbProcess.startedAt.toISOString()
+            earlierStartedAt: dbProcess.startedAt.toISOString(),
           });
           return;
         }
@@ -107,7 +108,7 @@ export class Worker {
         logger.info(`Worker: Processed file ${filename}`, { 
           processId, 
           words: words.length, 
-          lines: lines.length 
+          lines: lines.length, 
         });
 
         // --- DEBUG HOOKS ---
@@ -130,15 +131,15 @@ export class Worker {
 
       logger.info('Worker: Successfully completed process.', { processId });
 
-    } catch (error: any) {
+    } catch (e: unknown) {
       logger.error('Worker: Error during processing.', {
-        error: error.message,
-        processId
+        error: getErrMsg(e),
+        processId,
       });
       
       process.fail();
       await this._processRepo.save(process);
-      throw error;
+      throw e;
     }
   }
 }

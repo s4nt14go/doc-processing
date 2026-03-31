@@ -1,7 +1,7 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
 /**
- * SST v3 Configuration.
+ * SST v4 Configuration.
  * This file defines the AWS infrastructure for the Document Processing System.
  */
 export default $config({

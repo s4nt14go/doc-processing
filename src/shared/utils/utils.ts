@@ -1,3 +1,5 @@
+import { logger } from '../infra/logger/Logger.ts';
+
 type Diff<T, U> = T extends U ? never : T; // Remove types from T that are assignable to U
 
 // Type of { ...L, ...R }
@@ -107,3 +109,21 @@ export function isObject(object: unknown) {
 }
 
 export const isPrimitive = (value: unknown) => !(value instanceof Object);
+
+export const isError = (value: unknown) => value instanceof Error;
+export const getErrMsg = (error: unknown) => isError(error) ? error.message : String(error);
+export const getErrStack = (error: unknown) => isError(error) ? error.stack : undefined;
+export const handlerCatch = (log: string, e: unknown) => {
+  logger.error(log, {
+    error: getErrMsg(e),
+    stack: getErrStack(e),
+  });
+  return {
+    statusCode: 500,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      error: isError(e) ? e.message : 'Internal Server Error',
+    }),
+  };
+}
+export const hasErrorProp = (u: unknown) => (u && typeof u === 'object' && 'error' in u)

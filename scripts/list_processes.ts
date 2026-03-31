@@ -2,6 +2,7 @@
  * Script to list all document processing tasks.
  * Usage: node --env-file=.env scripts/list_processes.ts
  */
+import { getErrMsg, hasErrorProp } from '../src/shared/utils/utils.ts';
 
 const API_URL = process.env.API_URL;
 
@@ -12,35 +13,28 @@ async function listProcesses() {
   }
 
   const url = `${API_URL}/process/list`;
-  console.log(`Fetching all processes from ${url}...`);
+  console.log(`Listing processes from ${url}...`);
 
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
-    const result = await response.json() as any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await response.json() as any;
 
     if (response.ok) {
-      console.log('--- Current Processes ---');
-      if (result.length === 0) {
-        console.log('No processes found.');
-      } else {
-        console.table(result.map(p => ({
-          id: p.id,
-          status: p.status,
-          progress: p.progress ? `${p.progress.percentage}%` : 'N/A',
-          startedAt: p.startedAt || 'N/A'
-        })));
-      }
+      console.log('Processes List:');
+      console.table(result);
     } else {
-      console.error(`Failed to list processes: ${(result as any).error || response.statusText}`);
+      const errorMessage = hasErrorProp(result) ? result.error : response.statusText;
+      console.error(`Failed to list processes: ${errorMessage}`);
     }
-  } catch (error: any) {
-    console.error(`Error fetching processes: ${error.message}`);
+  } catch (e: unknown) {
+    console.error(`Error listing processes: ${getErrMsg(e)}`);
   }
 }
 

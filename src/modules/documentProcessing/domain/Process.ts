@@ -104,7 +104,7 @@ export class Process extends Entity<
     this.props.progress = {
       totalFiles: this.filenamesToProcess.length,
       processedFiles: 0,
-      percentage: 0
+      percentage: 0,
     };
     this.props.results = {
       totalWords: 0,

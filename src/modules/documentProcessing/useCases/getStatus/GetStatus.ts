@@ -5,7 +5,7 @@ import { ProcessMetadata } from '../../domain/Process.ts';
  * Use case responsible for retrieving the current status and progress of a processing task.
  */
 export class GetStatus {
-  constructor(private readonly _processRepo: IProcessRepo) {}
+  public constructor(private readonly _processRepo: IProcessRepo) {}
 
   /**
    * Executes the use case.

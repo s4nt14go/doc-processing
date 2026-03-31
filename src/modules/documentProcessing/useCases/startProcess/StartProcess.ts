@@ -14,14 +14,24 @@ export interface StartProcessRequestDto {
 /**
  * Type Guard to validate the structure of a StartProcessRequestDto.
  */
-export function isStartProcessRequestDto(test: any): test is StartProcessRequestDto {
-  return !!test &&
+export function isStartProcessRequestDto(test: unknown): test is StartProcessRequestDto {
+  return (
+    !!test &&
+    typeof test === 'object' &&
+    test !== null &&
+    'files' in test &&
     Array.isArray(test.files) &&
-    test.files.every((file: any) => 
-      !!file && 
-      typeof file.name === 'string' && 
-      typeof file.content === 'string'
-    );
+    test.files.every(
+      (file: unknown) =>
+        !!file &&
+        typeof file === 'object' &&
+        file !== null &&
+        'name' in file &&
+        typeof file.name === 'string' &&
+        'content' in file &&
+        typeof file.content === 'string',
+    )
+  );
 }
 
 /**
@@ -35,7 +45,7 @@ export class StartProcess {
   private readonly _processRepo: IProcessRepo;
   private readonly _messageBroker: IMessageBroker;
 
-  constructor(dependencies: {
+  public constructor(dependencies: {
     processRepo: IProcessRepo;
     messageBroker: IMessageBroker;
   }) {

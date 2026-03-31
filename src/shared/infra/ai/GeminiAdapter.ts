@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { logger } from '../logger/Logger.ts';
 import { ISummarizer } from '../../../modules/documentProcessing/services/ISummarizer.ts';
+import { getErrMsg } from '../../utils/utils.ts';
 
 const { GEMINI_API_KEY } = process.env;
 
@@ -14,7 +15,7 @@ if (!GEMINI_API_KEY)
 export class GeminiAdapter implements ISummarizer {
   private _ai: GoogleGenAI;
 
-  constructor() {
+  public constructor() {
     this._ai = new GoogleGenAI({
       apiKey: GEMINI_API_KEY!,
     });
@@ -40,9 +41,10 @@ export class GeminiAdapter implements ISummarizer {
       
       logger.info('GeminiAdapter: Successfully generated summary.');
       return text ? text.trim() : '[No summary generated]';
-    } catch (error: any) {
-      logger.error('GeminiAdapter: Error generating summary.', { error: error.message });
-      return `[Error generating summary: ${error.message}]`;
+    } catch (e: unknown) {
+      const errorMessage = getErrMsg(e);
+      logger.error('GeminiAdapter: Error generating summary.', { error: errorMessage });
+      return `[Error generating summary: ${errorMessage}]`;
     }
   }
 }

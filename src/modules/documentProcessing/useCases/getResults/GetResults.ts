@@ -1,17 +1,18 @@
 import { IProcessRepo } from '../../repos/IProcessRepo.ts';
 import { PROCESS_STATUS } from '../../domain/ProcessStatus.ts';
+import { Process } from '../../domain/Process.ts';
 
 export interface GetResultsResponse {
   isCompleted: boolean;
   status: string;
-  results?: any;
+  results?: Process['results'];
 }
 
 /**
  * Use case responsible for retrieving the analysis results of a task.
  */
 export class GetResults {
-  constructor(private readonly _processRepo: IProcessRepo) {}
+  public constructor(private readonly _processRepo: IProcessRepo) {}
 
   /**
    * Executes the use case.
@@ -28,14 +29,14 @@ export class GetResults {
     if (process.status !== PROCESS_STATUS.COMPLETED) {
       return {
         isCompleted: false,
-        status: process.status
+        status: process.status,
       };
     }
 
     return {
       isCompleted: true,
       status: process.status,
-      results: process.results
+      results: process.results,
     };
   }
 }

@@ -1,15 +1,16 @@
-import type { SQSEvent } from 'aws-lambda';
-import type { ModelStatic } from 'sequelize';
+import { SQSEvent } from 'aws-lambda';
+import { ModelStatic } from 'sequelize';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
 import { Worker } from './Worker.ts';
 import { GeminiAdapter } from '../../../../shared/infra/ai/GeminiAdapter.ts';
 import {
-  initializeDatabase
+  initializeDatabase,
 } from '../../../../shared/infra/sequelize/database.ts';
 import {
-  ProcessInstance
+  ProcessInstance,
 } from '../../../../shared/infra/sequelize/models/ProcessModel.ts';
 import { logger } from '../../../../shared/infra/logger/Logger.ts';
+import { getErrMsg, getErrStack } from '../../../../shared/utils/utils.ts';
 
 /**
  * AWS Lambda Handler for the Worker use case.
@@ -35,12 +36,12 @@ export const handler = async (event: SQSEvent) => {
       await useCase.execute(processId);
     }
 
-  } catch (error: any) {
+  } catch (e: unknown) {
     logger.error('Error in WorkerHandler', { 
-      error: error.message,
-      stack: error.stack 
+      error: getErrMsg(e),
+      stack: getErrStack(e),
     });
     // In SQS handlers, throwing an error will make the message return to the queue (retry)
-    throw error;
+    throw e;
   }
 };

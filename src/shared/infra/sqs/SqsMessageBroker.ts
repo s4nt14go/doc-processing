@@ -2,6 +2,7 @@ import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import { Resource } from 'sst';
 import { IMessageBroker } from '../../../modules/documentProcessing/services/IMessageBroker.ts';
 import { logger } from '../logger/Logger.ts';
+import { getErrMsg } from '../../utils/utils.ts';
 
 /**
  * Infrastructure implementation of the IMessageBroker using AWS SQS.
@@ -11,7 +12,7 @@ export class SqsMessageBroker implements IMessageBroker {
   private readonly _sqsClient: SQSClient;
   private readonly _queueUrl: string;
 
-  constructor() {
+  public constructor() {
     this._sqsClient = new SQSClient({});
     // Resource.Process.url is automatically injected by SST when the queue is linked
     this._queueUrl = Resource.Process.url;
@@ -32,16 +33,17 @@ export class SqsMessageBroker implements IMessageBroker {
 
       logger.info('Message Broker: Successfully sent processId to SQS.', { 
         processId,
-        queueUrl: this._queueUrl
+        queueUrl: this._queueUrl,
       });
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const errorMessage = getErrMsg(e);
       logger.error('Message Broker: Error sending message to SQS.', {
-        error: error.message,
+        error: errorMessage,
         processId,
-        queueUrl: this._queueUrl
+        queueUrl: this._queueUrl,
       });
-      // Rethrow to let the use case know the notification failed
-      throw new Error(`Failed to notify message broker: ${error.message}`);
+      // Rethrow to let the use case know the notification failed, preserving the original cause
+      throw new Error(`Failed to notify message broker: ${errorMessage}`, { cause: e });
     }
   }
 }

@@ -1,20 +1,21 @@
-import type { ModelStatic } from 'sequelize';
+import { ModelStatic } from 'sequelize';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
 import { ListProcesses } from './ListProcesses.ts';
 import {
-  initializeDatabase
+  initializeDatabase,
 } from '../../../../shared/infra/sequelize/database.ts';
 import {
-  ProcessInstance
+  type ProcessInstance,
 } from '../../../../shared/infra/sequelize/models/ProcessModel.ts';
-import { logger } from '../../../../shared/infra/logger/Logger.ts';
+import { handlerCatch } from '../../../../shared/utils/utils.ts';
+import { APIGatewayProxyResult } from 'aws-lambda';
 
 /**
  * AWS Lambda Handler for the ListProcesses use case.
  * Orchestrates the database connection, repository instantiation,
  * and use case execution for the GET /process/list endpoint.
  */
-export const handler = async () => {
+export const handler = async (): Promise<APIGatewayProxyResult> => {
   try {
     // 1. Initialize the database connection (optimized for Lambda warm starts)
     const sequelize = await initializeDatabase();
@@ -36,18 +37,7 @@ export const handler = async () => {
       body: JSON.stringify(processes),
     };
 
-  } catch (error: any) {
-    logger.error('Error in ListProcessesHandler', { 
-      error: error.message,
-      stack: error.stack 
-    });
-
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        error: error.message || 'Internal Server Error' 
-      }),
-    };
+  } catch (e: unknown) {
+    return handlerCatch('Error in ListProcessesHandler', e);
   }
 };

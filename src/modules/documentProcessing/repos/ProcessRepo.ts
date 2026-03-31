@@ -1,7 +1,7 @@
-import type { ModelStatic } from 'sequelize';
+import { ModelStatic } from 'sequelize';
 import { IProcessRepo } from './IProcessRepo.ts';
 import { Process } from '../domain/Process.ts';
-import type { ProcessDto } from '../domain/Process.ts';
+import { ProcessDto } from '../domain/Process.ts';
 import { ProcessInstance } from '../../../shared/infra/sequelize/models/ProcessModel.ts';
 
 /**
@@ -11,7 +11,7 @@ import { ProcessInstance } from '../../../shared/infra/sequelize/models/ProcessM
 export class ProcessRepo implements IProcessRepo {
   private _model: ModelStatic<ProcessInstance>;
 
-  constructor(model: ModelStatic<ProcessInstance>) {
+  public constructor(model: ModelStatic<ProcessInstance>) {
     this._model = model;
   }
 

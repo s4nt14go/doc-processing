@@ -1,41 +1,48 @@
-import type { ModelStatic } from 'sequelize';
+import { ModelStatic } from 'sequelize';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
 import { StartProcess, isStartProcessRequestDto } from './StartProcess.ts';
 import {
-  SqsMessageBroker
+  SqsMessageBroker,
 } from '../../../../shared/infra/sqs/SqsMessageBroker.ts';
 import {
-  initializeDatabase
+  initializeDatabase,
 } from '../../../../shared/infra/sequelize/database.ts';
 import {
-  ProcessInstance
+  ProcessInstance,
 } from '../../../../shared/infra/sequelize/models/ProcessModel.ts';
-import { logger } from '../../../../shared/infra/logger/Logger.ts';
+import { handlerCatch } from '../../../../shared/utils/utils.ts';
 
 /**
  * AWS Lambda Handler for the StartProcess use case.
  * Orchestrates the database connection, repository instantiation, 
  * and use case execution for the POST /process/start endpoint.
  */
-export const handler = async (event: any) => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     // 1. Initialize the database connection (optimized for Lambda warm starts)
     const sequelize = await initializeDatabase();
-    
+
     // 2. Resolve the Process model from the Sequelize instance
     const processModel = sequelize.model('Process') as ModelStatic<ProcessInstance>;
-    
+
     // 3. Dependency Injection (Manual Composition Root for this Lambda)
     const processRepo = new ProcessRepo(processModel);
     const messageBroker = new SqsMessageBroker();
     const useCase = new StartProcess({ processRepo, messageBroker });
 
     // 4. Parse the incoming request payload
-    let request: any;
+    let request: unknown;
     try {
       request = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    } catch (e) {
-      throw new Error('Invalid JSON payload');
+    } catch (// eslint-disable-next-line @typescript-eslint/no-unused-vars
+      innerErr
+    ) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Invalid JSON payload' }),
+      };
     }
 
     if (!isStartProcessRequestDto(request)) {
@@ -43,7 +50,7 @@ export const handler = async (event: any) => {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          error: 'Invalid request structure. Expected: { files: [{ name: string, content: string }] }' 
+          error: 'Invalid request structure. Expected: { files: [{ name: string, content: string }] }', 
         }),
       };
     }
@@ -58,19 +65,7 @@ export const handler = async (event: any) => {
       body: JSON.stringify({ process_id: processId }),
     };
 
-  } catch (error: any) {
-    logger.error('Error in StartProcessHandler', { 
-      error: error.message,
-      stack: error.stack 
-    });
-
-    // 7. Simplified error handling: Always return 500 on failure for now.
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        error: error.message || 'Internal Server Error' 
-      }),
-    };
+  } catch (e: unknown) {
+    return handlerCatch('Error in StartProcessHandler', e);
   }
 };

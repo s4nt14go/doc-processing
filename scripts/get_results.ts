@@ -1,7 +1,8 @@
 /**
- * Script to retrieve the analysis results of a completed document processing task.
+ * Script to check the results of a document processing task.
  * Usage: node --env-file=.env scripts/get_results.ts <process_id>
  */
+import { getErrMsg, hasErrorProp } from '../src/shared/utils/utils.ts';
 
 const API_URL = process.env.API_URL;
 
@@ -20,29 +21,27 @@ async function getResults() {
   }
 
   const url = `${API_URL}/process/results/${processId}`;
-  console.log(`Fetching results for process: ${processId} from ${url}...`);
+  console.log(`Checking results for process: ${processId} at ${url}...`);
 
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await response.json() as any;
 
     if (response.ok) {
-      console.log('--- Process Results ---');
-      console.log(JSON.stringify(result, null, 2));
+      console.log('Process Results:', JSON.stringify(result, null, 2));
     } else {
-      console.error(`Failed to get results: ${result.error || response.statusText}`);
-      if (result.status) {
-        console.log(`Current process status is: ${result.status}`);
-      }
+      const errorMessage = hasErrorProp(result) ? result.error : response.statusText;
+      console.error(`Failed to get results: ${errorMessage}`);
     }
-  } catch (error: any) {
-    console.error(`Error fetching results: ${error.message}`);
+  } catch (e: unknown) {
+    console.error(`Error fetching results: ${getErrMsg(e)}`);
   }
 }
 

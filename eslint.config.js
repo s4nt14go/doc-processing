@@ -54,9 +54,31 @@ export default tseslint.config(
     },
   },
 
+  // Exceptions
+  {
+    // Disable certain rules for scripts since they are CLI tools where console is expected.
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/shared/infra/sequelize/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    // sst.config.ts requires a triple-slash reference for its dynamic types.
+    files: ['sst.config.ts'],
+    rules: {
+      '@typescript-eslint/triple-slash-reference': 'off',
+    },
+  },
+
   {
     // Placeholder for additional ignores. 
     // Note: node_modules and .git are ignored by default in Flat Config.
-    // ignores: ['dist/', 'pack/**', 'coverage/'],
+    ignores: ['.sst/', 'node_modules/**'],
   },
 );

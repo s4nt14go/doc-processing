@@ -1,7 +1,7 @@
 import { DataTypes, Sequelize, Model } from 'sequelize';
-import type { ModelStatic } from 'sequelize';
+import { ModelStatic } from 'sequelize';
 import { PROCESS_STATUS_VALUES } from '../../../../modules/documentProcessing/domain/ProcessStatus.ts';
-import type { ProcessDto } from '../../../../modules/documentProcessing/domain/Process.ts';
+import { ProcessDto } from '../../../../modules/documentProcessing/domain/Process.ts';
 
 /**
  * Mapping the DTO to model attributes.
@@ -57,6 +57,6 @@ export const initProcessModel = (sequelize: Sequelize): ModelStatic<ProcessInsta
     {
       tableName: 'processes',
       timestamps: true,
-    }
+    },
   );
 };
