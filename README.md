@@ -76,6 +76,8 @@ The system's core resides in `src/modules/documentProcessing/`:
     *   **Update:** Updates progress and partial results in the DB.
 3.  **Finalization:** Upon completion, the state changes to `COMPLETED`. If a fatal error occurs, it changes to `FAILED`.
 
+> **Note on Complexity:** The following diagram reflects the robust logic required to handle distributed systems challenges. Since AWS SQS follows an "at-least-once" delivery model, message duplication is a normal occurrence. The worker implements integrity checks and a "First One Wins" concurrency strategy to ensure that competing instances do not corrupt the process state.
+
 ### Worker Logic Diagram
 ```mermaid
 flowchart TD
