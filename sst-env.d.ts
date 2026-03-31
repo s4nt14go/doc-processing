@@ -14,6 +14,10 @@ declare module "sst" {
       "type": "sst.aws.Queue"
       "url": string
     }
+    "ProcessDLQ": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

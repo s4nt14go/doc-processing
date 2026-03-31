@@ -4,13 +4,23 @@ import { PROCESS_STATUS } from '../../domain/ProcessStatus.ts';
 import { ISummarizer } from '../../services/ISummarizer.ts';
 import { getErrMsg } from '../../../../shared/utils/utils.ts';
 
-const { APP_STAGE, TEST_WORKER_DELAY_SECONDS, TEST_WORKER_FORCE_FAILURE } = process.env;
+const { 
+  APP_STAGE, 
+  TEST_WORKER_DELAY_SECONDS, 
+  TEST_WORKER_FORCE_FAILURE 
+} = process.env;
+
+// CONCURRENCY defines how many files are processed in parallel within a single worker instance.
+// High values are constrained by:
+// 1. AI API Rate Limits: Most providers (like Gemini) have RPM (Requests Per Minute) limits.
+// 2. Lambda Resources: Higher concurrency increases memory and CPU usage per execution.
+const CONCURRENCY = 3;
+
 if (!APP_STAGE)
   throw new Error('APP_STAGE environment variable is required but not defined.');
 
-
 /**
- * Processes files within a batch.
+ * Processes files within a batch using controlled concurrency.
  */
 export class Worker {
   private readonly _processRepo: IProcessRepo;
@@ -25,8 +35,7 @@ export class Worker {
   }
 
   public async execute(processId: string): Promise<void> {
-
-    logger.info('Worker: Starting execution for process.', { processId });
+    logger.info('Worker: Starting execution for process.', { processId, concurrency: CONCURRENCY });
 
     const process = await this._processRepo.findById(processId);
     if (!process) {
@@ -38,8 +47,7 @@ export class Worker {
       const myStartedAt = process.startedAt!.getTime();
       await this._processRepo.save(process);
 
-      const filenames = process.filenamesToProcess;
-      
+      const filenames = [...process.filenamesToProcess];
       const globalWordFrequencies = new Map<string, number>();
       let totalWords = 0;
       let totalLines = 0;
@@ -47,52 +55,78 @@ export class Worker {
       const processedFilenames: string[] = [];
       const fileSummaries: Record<string, string> = {};
 
-      for (const filename of filenames) {
-        // Re-fetch to check if status was changed (STOPPED) or if another worker is competing
+      // Process files in chunks to control concurrency
+      for (let i = 0; i < filenames.length; i += CONCURRENCY) {
+        const chunk = filenames.slice(i, i + CONCURRENCY);
+        
+        // 1. Re-fetch and integrity check before starting a new chunk
         const dbProcess = await this._processRepo.findById(processId);
-        
         if (!dbProcess || dbProcess.status !== PROCESS_STATUS.RUNNING) {
-          logger.info('Worker: Process no longer RUNNING. Aborting.', { 
-            processId, 
-            status: dbProcess?.status, 
-          });
+          logger.info('Worker: Process no longer RUNNING. Aborting chunk.', { processId, status: dbProcess?.status });
           return;
         }
 
-        // If someone else started earlier than me, I am a redundant duplicate. Avoid race conditions.
         if (dbProcess.startedAt && dbProcess.startedAt.getTime() < myStartedAt) {
-          logger.info('Worker: An earlier instance is already processing. Aborting late duplicate.', { 
-            processId,
-            myStartedAt: new Date(myStartedAt).toISOString(),
-            earlierStartedAt: dbProcess.startedAt.toISOString(),
-          });
+          logger.info('Worker: Earlier instance detected. Aborting chunk.', { processId });
           return;
         }
 
-        const content = process.filesToProcess[filename];
+        // 2. Execute chunk in parallel
+        logger.info(`Worker: Processing chunk of ${chunk.length} files...`, { processId });
         
-        // Analysis: lines and words
-        const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
-        const words = content.split(/\s+/).filter(word => word.length > 0);
+        const chunkResults = await Promise.all(chunk.map(async (filename) => {
+          const content = process.filesToProcess[filename];
+          
+          // Local Analysis (CPU bound but fast)
+          const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
+          const words = content.split(/\s+/).filter(word => word.length > 0);
+          
+          // AI Summary (I/O bound - this is where parallelism shines)
+          const summary = await this._summarizer.summarize(content);
 
-        totalWords += words.length;
-        totalLines += lines.length;
-        totalCharacters += content.length;
-        processedFilenames.push(filename);
+          // Local Word Frequency
+          const localFreq = new Map<string, number>();
+          for (const word of words) {
+            const cleanWord = word.toLowerCase().replace(/[^a-z0-9áéíóúñ]/g, '');
+            if (cleanWord.length > 0) {
+              localFreq.set(cleanWord, (localFreq.get(cleanWord) || 0) + 1);
+            }
+          }
 
-        // AI: Generate summary
-        fileSummaries[filename] = await this._summarizer.summarize(content);
+          return {
+            filename,
+            wordCount: words.length,
+            lineCount: lines.length,
+            charCount: content.length,
+            summary,
+            localFreq
+          };
+        }));
 
-        // Accurate Word Frequency: process every word
-        for (const word of words) {
-          const cleanWord = word.toLowerCase().replace(/[^a-z0-9áéíóúñ]/g, '');
-          if (cleanWord.length > 0) {
-            const currentCount = globalWordFrequencies.get(cleanWord) || 0;
-            globalWordFrequencies.set(cleanWord, currentCount + 1);
+        // 3. Aggregate results and handle debug hooks
+        for (const res of chunkResults) {
+          totalWords += res.wordCount;
+          totalLines += res.lineCount;
+          totalCharacters += res.charCount;
+          processedFilenames.push(res.filename);
+          fileSummaries[res.filename] = res.summary;
+
+          for (const [word, count] of res.localFreq.entries()) {
+            globalWordFrequencies.set(word, (globalWordFrequencies.get(word) || 0) + count);
+          }
+
+          // Individual debug hooks (maintained for testing STOP between files)
+          if (!APP_STAGE!.includes('prod')) {
+            if (TEST_WORKER_DELAY_SECONDS) {
+              await new Promise(resolve => setTimeout(resolve, parseInt(TEST_WORKER_DELAY_SECONDS) * 1000));
+            }
+            if (TEST_WORKER_FORCE_FAILURE === 'true') {
+              throw new Error('Simulated error for testing');
+            }
           }
         }
 
-        // Calculate current Top 5 from the full map
+        // 4. Persist progress after chunk completion
         const topWords = Array.from(globalWordFrequencies.entries())
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5)
@@ -106,40 +140,15 @@ export class Worker {
           mostFrequentWords: topWords,
           fileSummaries: { ...fileSummaries },
         });
+
         await this._processRepo.save(process);
-        
-        logger.info(`Worker: Processed file ${filename}`, { 
-          processId, 
-          words: words.length, 
-          lines: lines.length, 
-        });
-
-        // --- DEBUG HOOKS ---
-        // These hooks facilitate testing 'STOPPED' and 'FAILED' functionality.
-        // Safety: Only allowed if APP_STAGE does not contain 'prod'.
-        if (!APP_STAGE!.toString().includes('prod')) {
-          const debugDelay = TEST_WORKER_DELAY_SECONDS;
-          if (debugDelay) {
-            logger.info(`Worker: Debug delay enabled (${debugDelay}s). Waiting...`, { processId, stage: APP_STAGE });
-            await new Promise(resolve => setTimeout(resolve, parseInt(debugDelay) * 1000));
-          }
-
-          if (TEST_WORKER_FORCE_FAILURE === 'true') {
-            logger.info('Worker: Debug force failure enabled. Throwing error...', { processId, stage: APP_STAGE });
-            throw new Error('Simulated error for testing');
-          }
-        }
-        // -------------------
+        logger.info(`Worker: Completed chunk up to ${processedFilenames.length}/${filenames.length} files.`, { processId });
       }
 
-      logger.info('Worker: Successfully completed process.', { processId });
+      logger.info('Worker: Successfully completed all files.', { processId });
 
     } catch (e: unknown) {
-      logger.error('Worker: Error during processing.', {
-        error: getErrMsg(e),
-        processId,
-      });
-      
+      logger.error('Worker: Error during processing.', { error: getErrMsg(e), processId });
       process.fail();
       await this._processRepo.save(process);
       throw e;
