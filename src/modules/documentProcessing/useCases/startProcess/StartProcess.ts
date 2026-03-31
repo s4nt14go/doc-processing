@@ -12,6 +12,19 @@ export interface StartProcessRequestDto {
 }
 
 /**
+ * Type Guard to validate the structure of a StartProcessRequestDto.
+ */
+export function isStartProcessRequestDto(test: any): test is StartProcessRequestDto {
+  return !!test &&
+    Array.isArray(test.files) &&
+    test.files.every((file: any) => 
+      !!file && 
+      typeof file.name === 'string' && 
+      typeof file.content === 'string'
+    );
+}
+
+/**
  * Use case responsible for orchestrating the start of a document processing task.
  * 1. Receives the file names and contents via API payload.
  * 2. Creates a PENDING process entity with the provided content.

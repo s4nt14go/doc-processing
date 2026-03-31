@@ -1,6 +1,6 @@
 import type { ModelStatic } from 'sequelize';
 import { ProcessRepo } from '../../repos/ProcessRepo.ts';
-import { StartProcess, StartProcessRequestDto } from './StartProcess.ts';
+import { StartProcess, isStartProcessRequestDto } from './StartProcess.ts';
 import {
   SqsMessageBroker
 } from '../../../../shared/infra/sqs/SqsMessageBroker.ts';
@@ -31,11 +31,21 @@ export const handler = async (event: any) => {
     const useCase = new StartProcess({ processRepo, messageBroker });
 
     // 4. Parse the incoming request payload
-    let request: StartProcessRequestDto;
+    let request: any;
     try {
       request = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
     } catch (e) {
       throw new Error('Invalid JSON payload');
+    }
+
+    if (!isStartProcessRequestDto(request)) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          error: 'Invalid request structure. Expected: { files: [{ name: string, content: string }] }' 
+        }),
+      };
     }
 
     // 5. Execute the use case
