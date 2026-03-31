@@ -144,7 +144,23 @@ Manually stops a running process.
 npm run stop-process <process_id>
 ```
 
-## 8. AI Usage Transparency
+## 8. Automated Tests
+
+The project uses **Vitest** for both unit and end-to-end testing.
+
+### Unit Tests
+Focus on domain logic and use cases in isolation using mocks for dependencies (DIP).
+```bash
+npm run test:unit
+```
+
+### End-to-End (E2E) Tests
+Validate the full integration (API -> SQS -> Worker -> DB -> AI). These tests require a deployed environment and an updated `.env` file.
+```bash
+npm run test:e2e
+```
+
+## 9. AI Usage Transparency
 
 The following tools and methodologies were employed during development:
 

@@ -18,7 +18,8 @@
     "get-results": "node --experimental-strip-types --env-file=.env scripts/get_results.ts",
     "stop-process": "node --experimental-strip-types --env-file=.env scripts/stop_process.ts",
     "list-processes": "node --experimental-strip-types --env-file=.env scripts/list_processes.ts",
-    "test:unit": "vitest run"
+    "test:unit": "TEST_MODE=unit vitest run",
+    "test:e2e": "TEST_MODE=e2e vitest run"
   },
   "devDependencies": {
     "@aws-sdk/client-sqs": "^3.1019.0",
