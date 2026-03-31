@@ -42,7 +42,8 @@ export type ProcessDto = Spread<ProcessProps, {
  * Metadata version of Process for status polling.
  * Excludes large file contents and uses optional properties instead of nulls.
  */
-export type ProcessMetadata = Spread<Omit<ProcessDto, 'filesToProcess'>, {
+export type ProcessMetadata = Spread<Omit<ProcessDto, 'filesToProcess' | 'id'>, {
+  process_id: string;
   progress?: NonNullable<ProcessDto['progress']>;
   startedAt?: NonNullable<ProcessDto['startedAt']>;
   estimatedCompletion?: NonNullable<ProcessDto['estimatedCompletion']>;
@@ -188,7 +189,7 @@ export class Process extends Entity<
     const dto = this.toDto();
 
     const metadata: ProcessMetadata = {
-      id: dto.id,
+      process_id: dto.id,
       status: dto.status,
     };
 
