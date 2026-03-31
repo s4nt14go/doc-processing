@@ -6,6 +6,7 @@
 *   **Asynchronicity:** `sst.aws.Queue` (SQS) to decouple request reception from heavy processing.
 *   **Database:** **CockroachDB** (PostgreSQL-compatible) managed with **Sequelize ORM**. Chosen for its serverless architecture, which provides effortless scaling and high availability.
 *   **Intelligent Processing:** Integration with **Google Gemini API** (chosen for its generous free tier) to generate content summary.
+*   **Structured Logging:** Implemented using **AWS Lambda Powertools**, providing JSON-formatted logs for better observability and traceability in CloudWatch.
 
 ## 2. Module Structure (DDD)
 
@@ -142,3 +143,11 @@ Manually stops a running process.
 ```bash
 npm run stop-process <process_id>
 ```
+
+## 8. AI Usage Transparency
+
+The following tools and methodologies were employed during development:
+
+1.  **Tools Used:** **Gemini CLI (Google)** was used as the primary AI assistant for code generation, architectural design, debugging, and documentation.
+2.  **Modifications:** All AI-generated code was manually reviewed.
+**Justification:** Using the Gemini CLI significantly sped up development while keeping code quality high.
