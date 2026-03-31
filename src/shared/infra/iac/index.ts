@@ -11,9 +11,18 @@ export default async function main() {
   if (!GEMINI_API_KEY)
     throw new Error('GEMINI_API_KEY is not defined in your environment or .env file.');
 
+  // Define the Dead Letter Queue
+  const dlq = new sst.aws.Queue('ProcessDLQ');
+
   // Define the SQS Queue for document processing
   const queue = new sst.aws.Queue('Process', {
     visibilityTimeout: '150 seconds', // 150s (2.5 min) is 25% longer than 2 min worker lambda timeout
+    dlq: {
+      queue: dlq.arn,
+      // The 'retry' property sets the maxReceiveCount for the DLQ.
+      // 3 is the default value in SST v4 if omitted.
+      retry: 3,
+    },
   });
 
   // Define the REST API
