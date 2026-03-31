@@ -27,12 +27,12 @@ export const handler = async (event: SQSEvent) => {
       const body = JSON.parse(record.body);
       const { processId } = body;
 
-      if (!processId) {
-        logger.error('Worker Handler: No processId found in message body.', { body });
+      if (!processId || typeof processId !== 'string') {
+        logger.error('Worker Handler: processId not found or not a string.', { body });
         continue;
       }
 
-      await useCase.execute({ processId });
+      await useCase.execute(processId);
     }
 
   } catch (error: any) {

@@ -7,9 +7,6 @@ const { APP_STAGE, TEST_WORKER_DELAY_SECONDS, TEST_WORKER_FORCE_FAILURE } = proc
 if (!APP_STAGE)
   throw new Error('APP_STAGE environment variable is required but not defined.');
 
-export interface WorkerRequestDto {
-  processId: string;
-}
 
 /**
  * Processes files within a batch.
@@ -26,8 +23,7 @@ export class Worker {
     this._summarizer = dependencies.summarizer;
   }
 
-  public async execute(request: WorkerRequestDto): Promise<void> {
-    const { processId } = request;
+  public async execute(processId: string): Promise<void> {
 
     logger.info('Worker: Starting execution for process.', { processId });
 
