@@ -1,5 +1,9 @@
 # Document Processing System
 
+## 0. Prerequisites
+
+*   **Node.js:** This project requires **Node.js 24** (as it uses native support for `--experimental-strip-types` and `.env` file loading).
+
 ## 1. Technical Architecture (Cloud Native with SST v4)
 
 *   **REST API:** `sst.aws.Api` (AWS API Gateway) to expose the requested REST endpoints.
