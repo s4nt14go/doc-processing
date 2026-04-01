@@ -126,4 +126,7 @@ export const handlerCatch = (log: string, e: unknown) => {
     }),
   };
 }
-export const hasErrorProp = (u: unknown) => (u && typeof u === 'object' && 'error' in u)
+export function hasErrorProp(u: unknown): u is { error: string } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return !!u && typeof u === 'object' && 'error' in u && typeof (u as any).error === 'string';
+}

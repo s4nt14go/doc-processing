@@ -100,9 +100,10 @@ async function sendBatch(url: string, files: { name: string; content: string }[]
     const result = await response.json();
 
     if (response.ok) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       console.log('Batch successfully started. ID:', (result as any).process_id);
     } else {
-      const errorMessage = hasErrorProp(result) ? (result as any).error : response.statusText;
+      const errorMessage = hasErrorProp(result) ? result.error : response.statusText;
       console.error(`Failed to start batch: ${errorMessage}`);
     }
   } catch (e: unknown) {

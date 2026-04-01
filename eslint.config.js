@@ -63,7 +63,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/shared/infra/sequelize/*.ts'],
+    files: ['src/shared/infra/sequelize/*.ts', 'src/**/*.unit.ts', 'src/**/*.e2e.ts'],
     rules: {
       'no-console': 'off',
     },
@@ -79,6 +79,6 @@ export default tseslint.config(
   {
     // Placeholder for additional ignores. 
     // Note: node_modules and .git are ignored by default in Flat Config.
-    ignores: ['.sst/', 'node_modules/**'],
+    ignores: ['.sst/', 'node_modules/**', './sst-env.d.ts'],
   },
 );

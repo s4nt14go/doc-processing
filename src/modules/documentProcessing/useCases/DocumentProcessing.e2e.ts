@@ -17,10 +17,10 @@ describe('Document Processing System E2E', () => {
         files: [
           {
             name: 'e2e_test.txt',
-            content: 'This is a test document for the end-to-end flow. It contains multiple words to verify statistics.'
-          }
-        ]
-      })
+            content: 'This is a test document for the end-to-end flow. It contains multiple words to verify statistics.',
+          },
+        ],
+      }),
     });
 
     expect(startResponse.status).toBe(201);

@@ -7,7 +7,7 @@ import { getErrMsg } from '../../../../shared/utils/utils.ts';
 const { 
   APP_STAGE, 
   TEST_WORKER_DELAY_SECONDS, 
-  TEST_WORKER_FORCE_FAILURE 
+  TEST_WORKER_FORCE_FAILURE,
 } = process.env;
 
 // CONCURRENCY defines how many files are processed in parallel within a single worker instance.
@@ -83,7 +83,7 @@ export class Worker {
             logger.info('Worker: An earlier instance is ACTIVE and processing. Aborting late duplicate chunk.', { 
               processId,
               myStartedAt: new Date(myStartedAt).toISOString(),
-              earlierStartedAt: dbProcess!.startedAt.toISOString()
+              earlierStartedAt: dbProcess!.startedAt.toISOString(),
             });
             return;
           }
@@ -91,7 +91,7 @@ export class Worker {
           // If the earlier instance is not RUNNING (e.g., it FAILED), I take over.
           logger.info('Worker: An earlier instance exists but is not RUNNING. Taking over processing.', { 
             processId,
-            earlierStatus: dbProcess!.status 
+            earlierStatus: dbProcess!.status,
           });
         }
 
@@ -123,7 +123,7 @@ export class Worker {
             lineCount: lines.length,
             charCount: content.length,
             summary,
-            localFreq
+            localFreq,
           };
         }));
 

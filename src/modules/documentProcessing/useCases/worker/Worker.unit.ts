@@ -25,7 +25,7 @@ describe('Worker Use Case', () => {
 
     worker = new Worker({
       processRepo: mockRepo,
-      summarizer: mockSummarizer
+      summarizer: mockSummarizer,
     });
   });
 

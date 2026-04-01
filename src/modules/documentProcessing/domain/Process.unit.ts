@@ -5,7 +5,7 @@ import { PROCESS_STATUS } from './ProcessStatus.ts';
 describe('Process Domain Entity', () => {
   const mockFiles = [
     { name: 'test1.txt', content: 'hello world' },
-    { name: 'test2.txt', content: 'vitest is great' }
+    { name: 'test2.txt', content: 'vitest is great' },
   ];
 
   it('should create a process in PENDING status', () => {
@@ -24,7 +24,7 @@ describe('Process Domain Entity', () => {
     expect(process.progress).toEqual({
       totalFiles: 2,
       processedFiles: 0,
-      percentage: 0
+      percentage: 0,
     });
     expect(process.startedAt).toBeInstanceOf(Date);
   });
@@ -46,7 +46,7 @@ describe('Process Domain Entity', () => {
       totalCharacters: 25,
       mostFrequentWords: ['world', 'hello'],
       filesProcessed: ['test1.txt'],
-      fileSummaries: { 'test1.txt': 'A test summary' }
+      fileSummaries: { 'test1.txt': 'A test summary' },
     };
 
     process.recordProcessResults(results);
@@ -67,7 +67,7 @@ describe('Process Domain Entity', () => {
       totalCharacters: 50,
       mostFrequentWords: ['test'],
       filesProcessed: ['test1.txt', 'test2.txt'],
-      fileSummaries: { 'test1.txt': 's1', 'test2.txt': 's2' }
+      fileSummaries: { 'test1.txt': 's1', 'test2.txt': 's2' },
     });
 
     expect(process.status).toBe(PROCESS_STATUS.COMPLETED);
