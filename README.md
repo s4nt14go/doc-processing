@@ -5,7 +5,7 @@
 *   **REST API:** `sst.aws.Api` (AWS API Gateway) to expose the requested REST endpoints.
 *   **Asynchronicity:** `sst.aws.Queue` (SQS) to decouple request reception from heavy processing.
 *   **Database:** **CockroachDB** (PostgreSQL-compatible) managed with **Sequelize ORM**. Chosen for its serverless architecture, which provides effortless scaling and high availability.
-*   **Intelligent Processing:** Integration with **Google Gemini API** (chosen for its generous free tier) to generate content summary.
+*   **Intelligent Processing:** Integration with **Google Gemma 3** (specifically `gemma-3-27b-it`). Gemma 3 is a family of state-of-the-art open models from Google, chosen for its efficiency in summarization and high-quality multilingual support. It is accessed via the Google GenAI SDK and is available under a generous free tier through Google AI Studio.
 *   **Structured Logging:** Implemented using **AWS Lambda Powertools**, providing JSON-formatted logs for better observability and traceability in CloudWatch.
 
 ### Infrastructure Diagram
@@ -24,7 +24,7 @@ graph TD
         SQS -.->|3 Failures| DLQ[Dead Letter Queue]
         
         StartLambda & StatusLambda & ListLambda & StopLambda & WorkerLambda -->|ORM| DB[(CockroachDB)]
-        WorkerLambda -->|Summarize| Gemini[Google Gemini API]
+        WorkerLambda -->|Summarize| Gemma[Google Gemma API]
     end
 ```
 
@@ -56,7 +56,7 @@ The system's core resides in `src/modules/documentProcessing/`:
 │   └── shared/
 │       ├── core/           # DDD Base Classes
 │       └── infra/          # Infrastructure implementations
-│           ├── ai/         # AI Adapter (Gemini)
+│           ├── ai/         # AI Adapter (Gemma)
 │           ├── iac/        # SST/Pulumi constructs (API, Queue)
 │           ├── logger/     # Centralized logging
 │           ├── sequelize/  # Database (models, migrations)
@@ -72,7 +72,7 @@ The system's core resides in `src/modules/documentProcessing/`:
     *   Changes the state to `RUNNING`.
     *   **Batching:** Reads files in configurable batches.
     *   **Analysis:** For each file, calculates statistics and word frequency.
-    *   **AI:** Calls **Google Gemini API** to generate an intelligent summary of the processed document batch.
+    *   **AI:** Calls **Google Gemma API** to generate an intelligent summary of the processed document batch.
     *   **Update:** Updates progress and partial results in the DB.
 3.  **Finalization:** Upon completion, the state changes to `COMPLETED`. If a fatal error occurs, it changes to `FAILED`.
 
@@ -105,7 +105,7 @@ flowchart TD
     
     subgraph "Chunk Processing (Parallel)"
         Analyze[Local Stats Analysis]
-        AI[Gemini Summarization]
+        AI[Gemma Summarization]
     end
     
     Analyze & AI --> Save[Save Progress & Partial Results]
