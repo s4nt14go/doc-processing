@@ -78,7 +78,6 @@ export default tseslint.config(
 
   {
     // Placeholder for additional ignores. 
-    // Note: node_modules and .git are ignored by default in Flat Config.
     ignores: ['.sst/', 'node_modules/**', './sst-env.d.ts'],
   },
 );
