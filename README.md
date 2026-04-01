@@ -227,4 +227,4 @@ The following tools and methodologies were employed during development:
 
 1.  **Tools Used:** **Gemini CLI (Google)** was used as the primary AI assistant for code generation, architectural design, debugging, and documentation.
 2.  **Modifications:** All AI-generated code was manually reviewed.
-**Justification:** Using the Gemini CLI significantly sped up development while keeping code quality high.
+3.  **Justification:** Using the Gemini CLI significantly sped up development while keeping code quality high.
